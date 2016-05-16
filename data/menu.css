@@ -1,0 +1,12 @@
+.menu-item {
+  padding: 4px;
+  margin-bottom: 4px;
+  text-align: center;
+  font-size: 1em;
+  background-color: #E5F2F2;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background-color: #CFF2F2;
+}
