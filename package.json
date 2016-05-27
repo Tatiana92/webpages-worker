@@ -1,8 +1,8 @@
 {
   "title": "webpages-worker",
   "name": "webpages-worker",
-  "version": "0.0.1",
-  "description": "This add-on can save webpages and find some info in *.html files.",
+  "version": "0.0.5",
+  "description": "This add-on can save webpages in database and find some info in *.html files.",
   "main": "index.js",
   "author": "tatiana",
   "license": "MIT",

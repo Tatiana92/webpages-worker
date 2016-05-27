@@ -1,24 +1,42 @@
 <html>
 <head>
-    <style type="text/css" media="all">
-      body {
-        background-color: #E5F2F2;
-      }
-    </style>
-  </head>
+    <link rel="stylesheet" href="menu.css"/>
+</head>
 <body>
     Please, type info for search
     <br>
-    <input type="text" id="edit-box" size="42">
+    <input type="text" id="edit-box">
     <br>
     Please, type dirpath for search
     <br>
-	  <input type="text" id="finding-dir" size="42"/>
-    <button id="find">FIND!</button>
-    <div id='result'> <!--style="display: none;"-->
-      FOUNDED:&nbsp;&nbsp;<label id='res-count'></label>
-      <br>
-      <textarea id="result-list" rows="5" cols="32"></textarea>
+    <input type="text" id="finding-dir"/>
+    <br>
+    <table>
+        <tr>
+            <td>
+                <input type="checkbox" id="find-keywords"/>
+            </td>
+            <td>
+                <label for='find-keywords'>find using keywords</label>
+            </td>
+            <td>
+                <input type="checkbox" id="find-strict"/>
+            </td>
+            <td>
+                <label for='find-strict'>find this text strict</label>
+            </td>
+        </tr>
+        <tr>
+            <td colspan='2'>
+                <button id="find">FIND!</button>
+            </td>
+            <td colspan='2'>
+                FOUNDED:&nbsp;&nbsp;<label id='res-count'></label>
+            </td>
+        </tr>
+    </table>
+    <div id='result'> 
+      <textarea id="result-list"></textarea>
     </div>
   </body>
 </html>
