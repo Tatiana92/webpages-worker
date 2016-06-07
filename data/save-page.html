@@ -3,14 +3,19 @@
     <link rel="stylesheet" href="menu.css"/>
 </head>
 <body>
-   <center> Please, type keywords
-    <br>
+    <div>
+        <span id="close-icon"  title="Close window"> </span>
+    </div>
+   <center> <label>Please, type keywords</label>
       <textarea id="keywords-list"></textarea>
-    <br>
-    Please, type dirpath for saving
-    <br>
-	  <input type="text" id="saving-dir"/>
-    <button id="save">SAVE!</button>
+    <table id="resume-keys">
+    </table>
+    <label>Please, type dirpath for saving</label>
+	<input type="text" id="saving-dir"/>
+    <button id="save">Save</button><button id="close-btn">Close</button>
     </center>
+
+    <div id="divLoading"> 
+    </div>
   </body>
 </html>
