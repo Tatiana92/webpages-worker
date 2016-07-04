@@ -2,20 +2,17 @@
 <head>
     <meta charset="utf-8"/>
     <link rel="stylesheet" href="menu.css"/>
-      <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
-      <script src="//code.jquery.com/jquery-1.10.2.js"></script>
-      <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
 </head>
 
-<body onload="openClient('keywords');">
+<body>
     <div>
         <span id="close-icon"  title="Close window"> </span>
     </div>
     <div class="contentpanel">
     <br>
         <ul class="tab">
-          <li><a href="#" id='keywords-link' class="tablinks" onclick="openTab(event, 'keywords')">Search by keywords</a></li>
-          <li><a href="#" id='usual-link' class="tablinks" onclick="openTab(event, 'usual')">Search in files</a></li>
+          <li><a href="#" id='keywords-link' class="tablinks">Search by keywords</a></li>
+          <li><a href="#" id='usual-link' class="tablinks">Search in files</a></li>
         </ul>
 
         <div class="searchbar">
@@ -24,7 +21,7 @@
             <div id="keywords" class="tabcontent">
                 <table id="resume-keys">
                 </table>
-                <center><span id="add-clause" src="./icon/add.png" title="Add clause" onClick="addRow();"></span></center>
+                <center><span id="add-clause" title="Add clause"></span></center>
                 <hr>
             </div>
 
@@ -46,8 +43,7 @@
                     </td>
                 </tr>
             </table>
-            <div id="result-list">
-    <label><h3>Here will be search result... Just try to find something, baby!</h3></label></div>
+            <div id="result-list"></div>
         </div>
     <center><button id="close-btn">Close</button></center>
 
@@ -58,14 +54,14 @@
 <!--<script>
 
     var tableContent = {
-        'Должность': { 'element': 'input', 'params': { 'name': 'profession', 'type': 'text' } },
-        'Фио': { 'element': 'input', 'params': { 'name': 'name', 'type': 'text' } },
-        'Дата рождения': { 'element': 'input', 'params': { 'name': 'birthday', 'type': 'text' } },
-        'Места работы': { 'element': 'textarea', 'params': { 'name': 'work_history' } },
-        'Зарплатные ожидания': { 'element': 'input', 'params': { 'name': 'payment', 'type': 'text' } },
-        'Ключевые навыки': { 'element': 'textarea', 'params': { 'name': 'achievements' } },
-        'Общая информация': { 'element': 'textarea', 'params': { 'name': 'additional_info' } },
-        'Знание языков': { 'element': 'input', 'params': { 'name': 'languages', 'type': 'text' } }
+        'Position': { 'element': 'input', 'params': { 'name': 'profession', 'type': 'text' } },
+        'Full name': { 'element': 'input', 'params': { 'name': 'name', 'type': 'text' } },
+        'Date of Birth': { 'element': 'input', 'params': { 'name': 'birthday', 'type': 'text' } },
+        'Work': { 'element': 'textarea', 'params': { 'name': 'work_history' } },
+        'Salary': { 'element': 'input', 'params': { 'name': 'payment', 'type': 'text' } },
+        'Skills': { 'element': 'textarea', 'params': { 'name': 'achievements' } },
+        'Other info': { 'element': 'textarea', 'params': { 'name': 'additional_info' } },
+        'Languages': { 'element': 'input', 'params': { 'name': 'languages', 'type': 'text' } }
     };
 var textArea = document.getElementById("result-list");
 var resultArea = document.getElementById("result");
@@ -128,7 +124,7 @@ function getKeywords() {
         }
         for (var j = 0; j < inputArr.length; j++) {
             if (selectCat[i].name == inputArr[j].name) {
-                if (selectCat[i].value.toLowerCase().indexOf('дата') != -1) {
+                if (selectCat[i].value.toLowerCase().indexOf('date') != -1) {
                     //var from = "10-11-2011"; 
                     //var numbers = inputArr[j].value.match(/\d+/g); 
                     //var date = new Date(numbers[2], numbers[0]-1, numbers[1]);
@@ -176,7 +172,7 @@ function onSelectChange(e) {
         operand.remove(0);
     }
     var list = ['=','>','<','<>','>=','<='];
-    if (e.target.value.toLowerCase().indexOf('дата') != -1) {
+    if (e.target.value.toLowerCase().indexOf('date') != -1) {
         input.placeholder = 'ГГГГ.ММ.ДД';
         for (var i = 0; i < list.length; i++){
             var option = document.createElement("option");
@@ -186,7 +182,7 @@ function onSelectChange(e) {
         }
         return;
     }
-    if (e.target.value.toLowerCase().indexOf('зарплат') != -1) {
+    if (e.target.value.toLowerCase().indexOf('salary') != -1) {
         for (var i = 0; i < list.length; i++){
             var option = document.createElement("option");
             option.value = list[i];

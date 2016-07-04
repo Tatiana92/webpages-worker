@@ -1,5 +1,4 @@
 var content = unescape(encodeURIComponent(document.documentElement.outerHTML));
-content = '<meta charset="utf-8"/>' + content;
 var keywords = '';
 var date = new Date();
 var options = {
@@ -12,15 +11,19 @@ var options = {
   second: 'numeric'
 };
 var table_indx = 0;
-
 var filename = date.toLocaleString("en-US", options);
+var data = {};
+
 if (document.title.trim().length > 0) {
 	filename = document.title.trim();
-  keywords = filename.replace(/[\:\.\|\"\*\?\\\/<>\+]/g," ").split(' ').join(',');
+    keywords = filename.replace(/[\:\.\|\"\*\?\\\/<>\+]/g," ").split(' ').join(',');
 }
-keywords += ',' + document_keywords();
 filename = filename.replace(/[\:\.\|\"\*\?\\\/<>\+]/g,"-") + '.html';
-var data = {
+keywords += ',' + document_keywords();
+
+content = '<meta charset="utf-8"/>' + content; //without it you will have bad text in webpage
+
+data = {
 	'filename': filename,
 	'content': content,
     'keywords': keywords,
@@ -28,68 +31,153 @@ var data = {
 };
 
 if (self.options.asResume == true) {
-    if (document.location.href.indexOf('hh.ru/resume') != -1) {
-        for (var i in self.options.table) {
-            if (self.options.table[i]['value'] == undefined)
-                self.options.table[i]['value'] = [];
-            if (i.toLowerCase().indexOf('дата') != -1) {
-                var elemArr = document.querySelectorAll(self.options.table[i]['hhselector']);
-                for (var j = 0; j < elemArr.length; j++) {
-                    self.options.table[i]['value'].push(elemArr[j].content);
+    if (document.location.href.indexOf('hh.ru/resume') != -1 || document.documentElement.innerText.indexOf('HeadHunter') != -1) {
+        try {
+            for (var i in self.options.table) {
+                if (self.options.table[i]['value'] == undefined)
+                    self.options.table[i]['value'] = [];
+                if (i.toLowerCase().indexOf('date') != -1) {
+                    var elemArr = document.querySelectorAll(self.options.table[i]['hhselector']);
+                    if (elemArr.length == 0) {
+                        elemArr = document.querySelectorAll(self.options.table[i]['hhselector2']);
+                    }
+                    for (var j = 0; j < elemArr.length; j++) {
+                        self.options.table[i]['value'].push(elemArr[j].content);
+                    }
+                    if (elemArr.length == 0) {
+                        self.options.table[i]['value'].push(findInTable(self.options.table[i]['hhselector3'], 'рожден'));
+                    }
+                    continue;
                 }
-                continue;
-            }
-            if (i.indexOf('занятость') != -1) {
-                var elem = document.querySelectorAll(self.options.table[i]['hhselector'])[0];
-                if (elem)
-                    if (elem.parentNode.nextSibling) {
-                        var myVal = elem.parentNode.nextSibling.innerText;
-                        if (myVal.toLowerCase().indexOf('занятость') != -1) {
-                            myVal = myVal.substr('занятость'.length + 1, myVal.length);
+                if (i.indexOf('Employment') != -1) {
+                    var elem = document.querySelectorAll(self.options.table[i]['hhselector'])[0];
+                    if (!elem) {
+                        elem = document.querySelectorAll(self.options.table[i]['hhselector2'])[0];
+                    }
+                    if (elem)
+                        if (elem.parentNode.nextSibling) {
+                            var myVal = elem.parentNode.nextSibling.innerText;
+                            if (myVal.toLowerCase().indexOf('employment') != -1) {
+                                myVal = myVal.substr('employment'.length + 1, myVal.length);
+                            }
+                            self.options.table[i]['value'].push(myVal);
                         }
-                        self.options.table[i]['value'].push(myVal);
+                    continue;
+                }
+                if (i.indexOf('Work') != -1) {//- Workfor (var row = 0; row<arr.length; row++) {
+                    var arr = document.querySelectorAll(self.options.table[i]['hhselector']['block']);
+                    if (arr.length == 0) {
+                        arr = document.querySelectorAll(self.options.table[i]['hhselector2']['block']);//old hh
                     }
-                continue;
-            }
-            if (i.indexOf('работы') != -1) {//- Места работыfor (var row = 0; row<arr.length; row++) {
-                var arr = document.querySelectorAll("[data-qa='resume-block-experience']");
-                for (var j = 0; j < arr.length; j++) {
-                    var tmparr = arr[j].querySelectorAll("[class='resume-block-item-gap']");
-                    for (var row = 0; row < tmparr.length; row++) {
-                        var children3 = tmparr[row].querySelectorAll("[class='resume-block-right-column']");
-                        self.options.table[i]['value'].push(children3[0].innerText.substr(0, 1000));
+                    for (var j = 0; j < arr.length; j++) {
+                        var tmparr = arr[j].querySelectorAll(self.options.table[i]['hhselector']['company']);
+                        if (tmparr.length == 0)
+                            tmparr = arr[j].querySelectorAll(self.options.table[i]['hhselector2']['company']);
+                        for (var row = 0; row < tmparr.length; row++) {
+                            var children3 = tmparr[row].querySelectorAll(self.options.table[i]['hhselector']['experience']);
+                            if (children3.length == 0) {
+                                children3 = tmparr[row].querySelectorAll(self.options.table[i]['hhselector2']['experience']);
+                            }
+                            self.options.table[i]['value'].push(children3[0].innerText.substr(0, 1000));
+                        }
+                    }
+                    if (arr.length == 0) {
+                        arr = document.querySelectorAll(self.options.table[i]['hhselector3']);//very old hh
+                        if (arr.length > 0)
+                            self.options.table[i]['value'].push(arr[0].innerText);
+                    }
+                    continue;
+                }
+                var elemArr = document.querySelectorAll(self.options.table[i]['hhselector']);
+                if (elemArr.length == 0 && self.options.table[i]['hhselector2'] != undefined) {
+                    elemArr = document.querySelectorAll(self.options.table[i]['hhselector2']);
+                    if (i.indexOf('Languag') != -1 && elemArr.length != 0) {
+                        for (var j = 0; j < elemArr.length; j++) {
+                            if (elemArr[j].innerText.toLowerCase().indexOf('язык') != -1) {
+                                for (var k = 1; k < elemArr[j].children.length; k++) {//first element would be a title
+                                    self.options.table[i]['value'].push(elemArr[j].children[k].innerText);
+                                }
+                            }
+                        }
+                        continue;
+                    }
+
+                }
+                if (elemArr.length == 0){
+                    if (i.indexOf('Salary') != -1) {
+                        self.options.table[i]['value'].push(findInTable(self.options.table[i]['hhselector3'], 'зарпл'));
+                        continue;
+                    } else {
+                        if (i.indexOf('Languag') != -1) {
+                            self.options.table[i]['value'].push(findInTable(self.options.table[i]['hhselector3'], 'язык'));
+                            continue;
+                        } else {
+                            elemArr = document.querySelectorAll(self.options.table[i]['hhselector3']);
+                        }
                     }
                 }
-                continue;
+                for (var j = 0; j < elemArr.length; j++) {
+                    self.options.table[i]['value'].push(elemArr[j].innerText.substr(0, 1000));
+                }
             }
-            var elemArr = document.querySelectorAll(self.options.table[i]['hhselector']);
-            for (var j = 0; j < elemArr.length; j++) {
-                self.options.table[i]['value'].push(elemArr[j].innerText.substr(0, 1000));
+            for (var i in self.options.table) {
+                self.options.table[i]['value'] = parseValue(self.options.table[i]['value'], i);
             }
-        }
-        data['keywords'] = self.options.table;
-        data['ishh'] = true;
+            data['ishh'] = true;
+            data['keywords'] = self.options.table;
+        } catch (e) {
+            console.log('error while parsing - ', e);
+            self.options.asResume = false;
+        }/**/
+        
         sendData(data);
     } else {
-        if (confirm("this website is not HeadHunter. Our add-on can't parse this page. Do you want select keywords for resume by yourself?It can take some minutes."))
-        {
-            data['keywords'] = '';
-            data['ishh'] = false;
-            sendData(data);
-            runOnKeys(showSelection, "S".charCodeAt(0));
-
-        } else {
-            alert("We'll save this webpage as usual webpage");
+        var confirmstr = "this website is not HeadHunter. Our add-on can't parse this page. Do you want select keywords for resume by yourself?It can take some minutes.";
+        var saveUsualText = self.options.import;//if we import page and it isnt headhunter - user cant make resume by his hands!
+        if (!self.options.import) { //if it's import we cannot confirm
+            saveUsualText = !confirm(confirmstr)
+            if (saveUsualText == true) {
+                alert("We'll save this webpage as usual webpage");
+            }
+        }
+        if (saveUsualText) {
             self.options.asResume = false;
             self.options.table = keywords;
             data['keywords'] = self.options.table;
             data['ishh'] = false;
             sendData(data);
+        } else {
+            data['keywords'] = '';
+            data['ishh'] = false;
+            sendData(data);
+            runOnKeys(sendSelection, "S".charCodeAt(0));
         }
     }
 } else {
     sendData(data);
 }
+
+
+function findInTable(selector, label) {
+    elemArr = document.querySelectorAll(selector);
+    for (var j = 0; j < elemArr.length; j++) {
+        if (elemArr[j].innerText.toLowerCase().indexOf(label) != -1) {
+            return elemArr[j].children[1].innerText;
+        }
+    }
+    return '';
+}
+
+function sendSelection() {
+    var selection = window.getSelection();
+    self.port.emit("save-item", selection.toString());
+}
+
+function sendData(data) {
+    data['asResume'] = self.options.asResume;
+    self.port.emit("save-data", JSON.stringify(data));
+}
+
 function document_keywords(){
     var keywords = '';
     var metas = document.getElementsByTagName('meta');
@@ -104,14 +192,11 @@ function document_keywords(){
 
 function runOnKeys(func) {
     var codes = [].slice.call(arguments, 1);
-
     var pressed = {};
 
     document.onkeydown = function(e) {
         e = e || window.event;
-
         pressed[e.keyCode] = true;
-
         for (var i = 0; i < codes.length; i++) { // проверить, все ли клавиши нажаты
             if (!pressed[codes[i]]) {
                 return;
@@ -123,18 +208,49 @@ function runOnKeys(func) {
 
     document.onkeyup = function(e) {
         e = e || window.event;
-
         delete pressed[e.keyCode];
     };
 }
-function showSelection() {
-    var selection = window.getSelection();
-    self.port.emit("save-item", selection.toString());
+
+
+function month2num(name) {
+    var month = ['января','февраля','марта','апреля','мая','июня',
+    'июля','августа','сентября','октября','ноября','декабря'];
+
+    for (var i = 0; i < month.length; i++) {
+        if (name.indexOf(month[i]) != -1) {
+            var str = (i + 1).toString();
+            var pad = "00";
+            var ans = pad.substring(0, pad.length - str.length) + str;
+            
+            name = name.replace(month[i], ans);
+        }
+    }
+    return name;
 }
 
-function sendData(data) {
-    data['asResume'] = self.options.asResume;
+function parseValue(value, cat) {
+    var result = '';
+    switch (cat) {
+        case 'Date of Birth':
+            var birthdate = month2num(value[0].trim());
+            value = birthdate.replace(/[\:\.\-\;\|\"\'\*\?\\\/<>\+\n\t\r ]/g,"^").split('^').join('.');
+            break;
+        case 'Salary':
 
-    self.port.emit("save-data", JSON.stringify(data));
+            if (isNaN(parseInt(value[0].trim().replace(/[^0-9]/iug, ""))))
+                value = '0';
+            else
+                value = value[0].trim().replace(/[^0-9]/iug, "");
+            break;
+        default:
+            value = value.join(',').replace(/((\n)+)/gm, ",");
+            break;
+    }
+    if (['Full name', 'Date of Birth','Skills', 'Position'].indexOf(cat) == -1)
+        result = value.replace(/[\:\.\;\|\"\'\*\?\\\/<>\+\n\t\r\=]/g,"^").split('^').join(',').replace(/((,)+)/gm, ",");
+    else
+        result = value;
+
+    return result;
 }
-

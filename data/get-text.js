@@ -11,25 +11,44 @@ var findBtn = document.getElementById("find");
 var keywordsTable = document.getElementById("resume-keys");
 var addClauseImage = document.getElementById("add-clause");
 
-
+//set listeners for DOM objects
 keywordPane.addEventListener('click', function(evt) { openTab(evt, 'keywords'); }, false);
 usualPane.addEventListener('click', function(evt) { openTab(evt, 'usual'); }, false);
-document.getElementById('keywords-link').click();
-// make eventlisteners. they will send info for finding
 findBtn.addEventListener('click', submit, false);
 addClauseImage.addEventListener('click', addRow, false);
-/*document.addEventListener('keyup', function(event) {
-    if (event.keyCode == 13)
-        submit();
-}, false);*/
-
-
-var tableContent = self.options.tableContent;
-addRow();
-
 document.getElementById('close-icon').addEventListener('click', closeWindow, false);
 document.getElementById('close-btn').addEventListener('click', closeWindow, false);
 
+//prepare panel(getting tablecontent(for select categories),choosing tab, adding row)
+//row: select with categories, select with operands, input for user's value, delete row button/
+var tableContent = self.options.tableContent;
+document.getElementById('keywords-link').click();
+addRow();
+
+//port listeners
+self.port.on("show", function onShow() {
+    dir.value = localStorage.getItem('webpages-dir');
+});
+
+self.port.on('error', function(text) {
+    alert(text);
+});
+
+self.port.on('bad-dir', function() {
+    alert('Invalid dir for find!');
+});
+
+self.port.on('good-dir', function(text) {
+    localStorage.setItem('webpages-dir', text);
+    dir.value = text;
+});
+// find is over. we will put result in textarea
+self.port.on("end-of-find", function(text) {
+    setInfo(JSON.parse(text)['result'], JSON.parse(text)['count']);
+});
+
+
+//functions
 function closeWindow() {
     self.port.emit("close-window");
 }
@@ -68,7 +87,7 @@ function getKeywords() {
         }
         for (var j = 0; j < inputArr.length; j++) {
             if (selectCat[i].name == inputArr[j].name) {
-                if (selectCat[i].value.toLowerCase().indexOf('дата') != -1) {
+                if (selectCat[i].value.toLowerCase().indexOf('date') != -1) {
                     //var from = "10-11-2011"; 
                     //var numbers = inputArr[j].value.match(/\d+/g); 
                     //var date = new Date(numbers[2], numbers[0]-1, numbers[1]);
@@ -83,15 +102,6 @@ function getKeywords() {
     return result;
 }
 
-function keywordsOnchange() {
-    if (isKeyword.checked) {
-        isStrict.checked = '';
-        isStrict.disabled = true;
-    } else {
-        isStrict.disabled = false;
-    }
-}
-
 function deleteRow(event) {
     var tr = event.target;
     while (tr.tagName != 'TR') {
@@ -100,69 +110,69 @@ function deleteRow(event) {
     tr.remove();
 }
 
+function fillingSelect(selectElem, list) {
+    for (var i = 0; i < list.length; i++){
+        var option = document.createElement("option");
+        option.value = list[i];
+        option.text = list[i];
+        selectElem.appendChild(option);
+    }
+}
+
+//when selected category
+//it fills select with operands
 function onSelectChange(e) {
     var rowIndividualName = e.target.name;
     var arr = document.getElementsByName(rowIndividualName);
     var input, operand;
+    var list = ['=','>','<','!=','>=','<='];
+
     for (var i = 0; i < arr.length; i++){
         if (arr[i].tagName == 'INPUT')
             input = arr[i];
         if (arr[i].className == 'select-operations')
             operand = arr[i];
     }
+
     while (operand.children.length > 0) {
         operand.remove(0);
     }
-    var list = ['=','>','<','!=','>=','<='];
-    if (e.target.value.toLowerCase().indexOf('дата') != -1) {
+
+    if (e.target.value.toLowerCase().indexOf('date') != -1) {
         input.type = 'date';
         input.placeholder = 'ГГГГ.ММ.ДД';
-        for (var i = 0; i < list.length; i++){
-            var option = document.createElement("option");
-            option.value = list[i];
-            option.text = list[i];
-            operand.appendChild(option);
-        }
-        input.setAttribute('type', 'date')
+        fillingSelect(operand, list);
         return;
     }
-    list = ['=','>','<','<>','>=','<='];
     input.type = 'text';
     input.placeholder = '';
-    if (e.target.value.toLowerCase().indexOf('зарплат') != -1) {
-        for (var i = 0; i < list.length; i++){
-            var option = document.createElement("option");
-            option.value = list[i];
-            option.text = list[i];
-            operand.appendChild(option);
-        }
-        return;
-    }
-    
-    list = ['LIKE','=','<>'];
-    for (var i = 0; i < list.length; i++){
-        var option = document.createElement("option");
-        option.value = list[i];
-        option.text = list[i];
-        operand.appendChild(option);
-    }
+    if (e.target.value.toLowerCase().indexOf('salary') != -1) {
+        list = ['=','>','<','<>','>=','<='];
+    } else {
+        list = ['LIKE','=','<>']; // all other categories - not salary and not date
+    }    
+    fillingSelect(operand, list);
 }
 
 function addRow() {
+    var rowIndividualName = (new Date()).toTimeString();
+
     var tr = document.createElement('tr');
     keywordsTable.appendChild(tr);
-    var rowIndividualName = (new Date()).toTimeString();
+
+
     var td = document.createElement('td');
     var selectList = document.createElement('select');
+    var option = document.createElement("option");
+
     for (var i in tableContent){
         var option = document.createElement("option");
         option.value = i;
         option.text = i;
         selectList.appendChild(option);
     }
-    var option = document.createElement("option");
     option.value = 'all_cat';
-    option.text = 'По всем категориям';
+    option.text = 'All categories';
     selectList.appendChild(option);
     selectList.name = rowIndividualName;
     selectList.setAttribute('class','select-categories');
@@ -171,59 +181,42 @@ function addRow() {
     //td.setAttribute('style', 'width: 100px;');
     tr.appendChild(td);
 
+
     var td1 = document.createElement('td');
     var list = ['LIKE','=','<>'];
     var selectOperand = document.createElement('select');
+
     selectOperand.name = rowIndividualName;
     selectOperand.setAttribute('class','select-operations');
-    for (var i = 0;i< list.length; i++){
-        var option = document.createElement("option");
-        option.value = list[i];
-        option.text = list[i];
-        selectOperand.appendChild(option);
-    }
+    fillingSelect(selectOperand, list);
     //td.setAttribute('style', 'width: 60px !important;');
     td1.appendChild(selectOperand);
     tr.appendChild(td1);
 
-    var elem = document.createElement('input');
-    elem.type = 'text';
-    elem.name = rowIndividualName;
 
     var td2 = document.createElement('td');
-    tr.appendChild(td2);
+    var elem = document.createElement('input');
+
+    elem.type = 'text';
+    elem.name = rowIndividualName;
     td2.appendChild(elem);
+    tr.appendChild(td2);
+
 
     var td3 = document.createElement('td');
-    td3.setAttribute('style', 'width: 30px;');
-    tr.appendChild(td3);
     var deleteImage = document.createElement('span');
+
     deleteImage.setAttribute('title', "Delete this clause");
     deleteImage.className = "del-clause";
     deleteImage.addEventListener('click', deleteRow, false);
     td3.appendChild(deleteImage);
+    td3.setAttribute('style', 'width: 30px;');
+    tr.appendChild(td3);
 }
 
-self.port.on("show", function onShow() {
-    dir.value = localStorage.getItem('webpages-dir');
-});
-
-self.port.on('error', function(text) {
-    alert(text);
-});
-
-self.port.on('bad-dir', function() {
-    alert('Invalid dir for find!');
-});
-
-self.port.on('good-dir', function(text) {
-    localStorage.setItem('webpages-dir', text);
-    dir.value = text;
-});
-
 function setInfo(links, count) {
-    lbl.innerHTML = count;
     var parentDiv = document.getElementById("result-list");
+    lbl.innerHTML = count;
     while (parentDiv.children.length > 0) {
         parentDiv.removeChild(parentDiv.children[0]);
     }
@@ -240,22 +233,10 @@ function setInfo(links, count) {
 
         parentDiv.appendChild(newitem);
         newitem.addEventListener('click', function(e) {
-            self.port.emit('open-file', e.target.value);
+            self.port.emit('open-file', this.value);
         }, false)
     }
     //textArea.value = text;
-}
-// find is over. we will put result in textarea
-self.port.on("end-of-find", function(text) {
-    setInfo(JSON.parse(text)['result'], JSON.parse(text)['count']);
-});
-
-function openClient(tabname) {
-    try {
-        document.getElementById(tabname + '-link').click();
-    } catch(e) {
-
-    }
 }
 
 function openTab(evt, tabName) {

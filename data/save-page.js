@@ -5,56 +5,14 @@ var saveBtn = document.getElementById("save");
 var keywordsTable = document.getElementById("resume-keys");
 var divLoading = document.getElementById('divLoading');
 var tableContent;
-// make eventlisteners. they will send info for finding
+// make eventlisteners.
 saveBtn.addEventListener('click', submit, false);
-document.addEventListener('keyup', function(event) {
-    if (event.keyCode == 13)
-        submit();
-}, false);
-
-
 document.getElementById('close-icon').addEventListener('click', closeWindow, false);
 document.getElementById('close-btn').addEventListener('click', closeWindow, false);
 
-function closeWindow() {
-    self.port.emit("close-window");
-}
+//port listeners
 
-function submit() {
-    if (dir.value.length > 0) {
-        var data = {
-            'keywords': getValues(),
-            'dir': dir.value
-        }
-        saveBtn.disabled = true;
-        divLoading.className += " show";
-        self.port.emit("saving-text-entered", JSON.stringify(data));
-    }
-}
-function getValues() {
-    var info = {}
-    if (self.options.asResume == true) {
-        for (var row in tableContent) {
-            info[row] = tableContent[row]['dom-object'].value.toLowerCase();
-        }
-    } else {
-        info['Общая информация'] = textArea.value.toLowerCase();
-    }
-    return info;
-}
-
-function setFocus(elem) {
-    var focusedElems = document.getElementsByClassName('focused');
-    for (var i = 0; i < focusedElems.length; i++) {
-        focusedElems[i].className = focusedElems[i].className.replace(" focused", "");
-    }
-    elem.focus();
-    elem.className += ' focused';
-}
-
-self.port.on("take-keywords", function(text) {
-    textArea.value = text;
-});
+self.port.on("show", onShow);
 
 self.port.on('error', function(text) {
     alert(text);
@@ -73,6 +31,13 @@ self.port.on('good-dir', function(text) {
     dir.value = text;
 });
 
+self.port.on("saved", function() {
+    alert('Webpage saved successfully!');
+    divLoading.className = divLoading.className.replace(" show", "");
+    saveBtn.disabled = false;
+});
+
+//set in inputs info, when user fills resume form by his hands
 self.port.on('set-item', function(text) {
     var elem = document.activeElement;
     if (elem.tagName == 'INPUT' || elem.tagName == 'TEXTAREA') {
@@ -88,49 +53,12 @@ self.port.on('set-item', function(text) {
     }
 });
 
-function month2num(name) {
-    var month = ['января','февраля','марта','апреля','мая','июня',
-    'июля','августа','сентября','октября','ноября','декабря'];
-    for (var i = 0; i < month.length; i++) {
-        if (name.indexOf(month[i]) != -1) {
-            var str = (i + 1).toString();
-            var pad = "00";
-            var ans = pad.substring(0, pad.length - str.length) + str;
-            name = name.replace(month[i], ans);
-        }
-    }
-    return name;
+
+function closeWindow() {
+    self.port.emit("close-window");
 }
 
-function parseValue(value, cat) {
-    var result = '';
-    switch (cat) {
-        case 'Дата рождения':
-            var birthdate = month2num(value[0].trim());
-            value = birthdate.replace(/[\:\.\-\;\|\"\'\*\?\\\/<>\+\n\t\r ]/g,"^").split('^').join('.');
-            break;
-        case 'Зарплатные ожидания':
-
-            if (isNaN(parseInt(value[0].trim().replace(/[^0-9]/iug, ""))))
-                value = '0';
-            else
-                value = value[0].trim().replace(/[^0-9]/iug, "");
-            break;
-        default:
-            value = value.join(',').replace(/((\n)+)/gm, ",");
-            break;
-    }
-    if (['Фио', 'Дата рождения','Ключевые навыки', 'Должность'].indexOf(cat) == -1)
-        result = value.replace(/[\:\.\;\|\"\'\*\?\\\/<>\+\n\t\r\=]/g,"^").split('^').join(',').replace(/((,)+)/gm, ",");
-    else
-        result = value;
-
-        
-    return result;
-}
-
-
-self.port.on("show", function onShow() {
+function onShow() {
     dir.value = localStorage.getItem('webpages-dir');
 
     if (self.options.asResume == true && self.options.tableContent != undefined) {
@@ -138,21 +66,24 @@ self.port.on("show", function onShow() {
         for (var row in tableContent) {
             var tr = document.createElement('tr');
             var td = document.createElement('td');
+            var elem = document.createElement(tableContent[row]['element']);
+
+            keywordsTable.appendChild(tr);
+
             td.innerText = row;
             td.setAttribute('style', 'width: 100px;');
-            keywordsTable.appendChild(tr);
             tr.appendChild(td);
-            var elem = document.createElement(tableContent[row]['element']);
+
+            var td2 = document.createElement('td');
             for (var property in tableContent[row]['params']) {
                 elem.setAttribute(property, tableContent[row]['params'][property]);
             }
             if (tableContent[row]['value'] == undefined)
                 tableContent[row]['value'] = ['',];
-            elem.value = parseValue(tableContent[row]['value'], row);//;
-            var td2 = document.createElement('td');
-            tr.appendChild(td2);
-            td2.appendChild(elem);
+            elem.value = tableContent[row]['value'];//parseValue(tableContent[row]['value'], row);//;
             tableContent[row]['dom-object'] = elem;
+            td2.appendChild(elem);
+            tr.appendChild(td2);
 
             if (keywordsTable.rows.length == 1) {
                 setFocus(elem);
@@ -168,10 +99,82 @@ self.port.on("show", function onShow() {
         keywordsTable.setAttribute('hidden', true);
         textArea.removeAttribute('hidden');
     }
-});
+}
 
-self.port.on("saved", function() {
-    alert('Webpage saved successfully!');
-    divLoading.className = divLoading.className.replace(" show", "");
-    saveBtn.disabled = false;
-});
+function submit() {
+    if (dir.value.length > 0) {
+        var data = {
+            'keywords': getValues(),
+            'dir': dir.value
+        }
+        saveBtn.disabled = true;
+        divLoading.className += " show";
+        self.port.emit("saving-text-entered", JSON.stringify(data));
+    }
+}
+
+//getting info from panel. This info will send to 'server' to db
+function getValues() {
+    var info = {}
+    if (self.options.asResume == true) {
+        for (var row in tableContent) {
+            info[row] = tableContent[row]['dom-object'].value.toLowerCase();
+        }
+    } else {
+        info['Other info'] = textArea.value.toLowerCase();
+    }
+    return info;
+}
+
+function setFocus(elem) {
+    var focusedElems = document.getElementsByClassName('focused');
+
+    for (var i = 0; i < focusedElems.length; i++) {
+        focusedElems[i].className = focusedElems[i].className.replace(" focused", "");
+    }
+    elem.focus();
+    elem.className += ' focused';
+}
+
+function month2num(name) {
+    var month = ['января','февраля','марта','апреля','мая','июня',
+    'июля','августа','сентября','октября','ноября','декабря'];
+
+    for (var i = 0; i < month.length; i++) {
+        if (name.indexOf(month[i]) != -1) {
+            var str = (i + 1).toString();
+            var pad = "00";
+            var ans = pad.substring(0, pad.length - str.length) + str;
+            
+            name = name.replace(month[i], ans);
+        }
+    }
+    return name;
+}
+
+function parseValue(value, cat) {
+    var result = '';
+
+    switch (cat) {
+        case 'Date of Birth':
+            var birthdate = month2num(value[0].trim());
+            value = birthdate.replace(/[\:\.\-\;\|\"\'\*\?\\\/<>\+\n\t\r ]/g,"^").split('^').join('.');
+            break;
+        case 'Salary':
+
+            if (isNaN(parseInt(value[0].trim().replace(/[^0-9]/iug, ""))))
+                value = '0';
+            else
+                value = value[0].trim().replace(/[^0-9]/iug, "");
+            break;
+        default:
+            value = value.join(',').replace(/((\n)+)/gm, ",");
+            break;
+    }
+    if (['Full name', 'Date of Birth','Skills', 'Position'].indexOf(cat) == -1)
+        result = value.replace(/[\:\.\;\|\"\'\*\?\\\/<>\+\n\t\r\=]/g,"^").split('^').join(',').replace(/((,)+)/gm, ",");
+    else
+        result = value;
+
+    return result;
+}
