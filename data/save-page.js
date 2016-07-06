@@ -37,12 +37,12 @@ self.port.on("saved", function() {
     saveBtn.disabled = false;
 });
 
-//set in inputs info, when user fills resume form by his hands
+/*set in inputs info, when user fills resume form by his hands*/
 self.port.on('set-item', function(text) {
     var elem = document.activeElement;
     if (elem.tagName == 'INPUT' || elem.tagName == 'TEXTAREA') {
         var name = elem.parentElement.parentElement.children[0].innerText;
-        elem.value = parseValue([text,], name);
+        elem.value = parseValue([text, ], name);
         if (elem.parentElement.parentElement.nextElementSibling != null) {
             setFocus(elem.parentElement.parentElement.nextElementSibling.children[1].children[0]);
         } else {
@@ -58,6 +58,7 @@ function closeWindow() {
     self.port.emit("close-window");
 }
 
+/*preparing page when panel is open. Making inputs and filling them by info( if we have info)*/
 function onShow() {
     dir.value = localStorage.getItem('webpages-dir');
 
@@ -79,8 +80,8 @@ function onShow() {
                 elem.setAttribute(property, tableContent[row]['params'][property]);
             }
             if (tableContent[row]['value'] == undefined)
-                tableContent[row]['value'] = ['',];
-            elem.value = tableContent[row]['value'];//parseValue(tableContent[row]['value'], row);//;
+                tableContent[row]['value'] = ['', ];
+            elem.value = tableContent[row]['value']; //parseValue(tableContent[row]['value'], row);//;
             tableContent[row]['dom-object'] = elem;
             td2.appendChild(elem);
             tr.appendChild(td2);
@@ -113,7 +114,7 @@ function submit() {
     }
 }
 
-//getting info from panel. This info will send to 'server' to db
+/*getting info from panel. This info will send to 'server' to db*/
 function getValues() {
     var info = {}
     if (self.options.asResume == true) {
@@ -126,6 +127,7 @@ function getValues() {
     return info;
 }
 
+/*set focus to input. It helps user to see what field he is filling now(when he makes resume by his hands)*/
 function setFocus(elem) {
     var focusedElems = document.getElementsByClassName('focused');
 
@@ -137,15 +139,16 @@ function setFocus(elem) {
 }
 
 function month2num(name) {
-    var month = ['января','февраля','марта','апреля','мая','июня',
-    'июля','августа','сентября','октября','ноября','декабря'];
+    var month = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+        'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ];
 
     for (var i = 0; i < month.length; i++) {
         if (name.indexOf(month[i]) != -1) {
             var str = (i + 1).toString();
             var pad = "00";
             var ans = pad.substring(0, pad.length - str.length) + str;
-            
+
             name = name.replace(month[i], ans);
         }
     }
@@ -158,7 +161,7 @@ function parseValue(value, cat) {
     switch (cat) {
         case 'Date of Birth':
             var birthdate = month2num(value[0].trim());
-            value = birthdate.replace(/[\:\.\-\;\|\"\'\*\?\\\/<>\+\n\t\r ]/g,"^").split('^').join('.');
+            value = birthdate.replace(/[\:\.\-\;\|\"\'\*\?\\\/<>\+\n\t\r ]/g, "^").split('^').join('.');
             break;
         case 'Salary':
 
@@ -171,8 +174,8 @@ function parseValue(value, cat) {
             value = value.join(',').replace(/((\n)+)/gm, ",");
             break;
     }
-    if (['Full name', 'Date of Birth','Skills', 'Position'].indexOf(cat) == -1)
-        result = value.replace(/[\:\.\;\|\"\'\*\?\\\/<>\+\n\t\r\=]/g,"^").split('^').join(',').replace(/((,)+)/gm, ",");
+    if (['Full name', 'Date of Birth', 'Skills', 'Position'].indexOf(cat) == -1)
+        result = value.replace(/[\:\.\;\|\"\'\*\?\\\/<>\+\n\t\r\=]/g, "^").split('^').join(',').replace(/((,)+)/gm, ",");
     else
         result = value;
 

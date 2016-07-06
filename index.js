@@ -17,18 +17,18 @@ Cu.import("resource://gre/modules/FileUtils.jsm");
 var dbFile = 'webpages.sqlite'; //'C:\\Users\\tatyana_c\\Desktop\\webpages.txt';
 var fullDBPath = '';
 
-var hhselector = {'block': "[data-qa='resume-block-experience']", 'company': "[class='resume-block-item-gap']", 'experience': "[class='resume-block-right-column']"};
-var hhselector2 = {'block': '.resume__experience', 'company': ".resume__experience__item", 'experience': ".resume__experience__desc"};
+var hhselector = { 'block': "[data-qa='resume-block-experience']", 'company': "[class='resume-block-item-gap']", 'experience': "[class='resume-block-right-column']" };
+var hhselector2 = { 'block': '.resume__experience', 'company': ".resume__experience__item", 'experience': ".resume__experience__desc" };
 
 var savingFormInfo = {
     'table': {
-        'Position': { 'element': 'input', 'hhselector3': '.b-resume-profession', 'hhselector2': ".resume__position__title" , 'hhselector': "[data-qa='resume-block-title-position']" , 'params': { 'name': 'profession', 'type': 'text' }},
+        'Position': { 'element': 'input', 'hhselector3': '.b-resume-profession', 'hhselector2': ".resume__position__title", 'hhselector': "[data-qa='resume-block-title-position']", 'params': { 'name': 'profession', 'type': 'text' } },
         'Full name': { 'element': 'input', 'hhselector3': '.b-resume-name', 'hhselector2': ".resume__personal__name", 'hhselector': "[data-qa='resume-personal-address']", 'params': { 'name': 'name', 'type': 'text' } },
         'Date of Birth': { 'element': 'input', 'hhselector3': '.b-resume-important tr', 'hhselector2': "[itemprop='birthDate']", 'hhselector': "[data-qa='resume-personal-birthday']", 'params': { 'name': 'birthday', 'type': 'text' } },
         'Work': { 'element': 'textarea', 'hhselector3': '.b-resume-experience', 'hhselector2': hhselector2, 'hhselector': hhselector, 'params': { 'name': 'work_history' } },
         'Salary': { 'element': 'input', 'hhselector3': '.b-resume-important tr', 'hhselector2': ".resume__position__salary", 'hhselector': "[data-qa='resume-block-salary']", 'params': { 'name': 'payment', 'type': 'text' } },
         'Skills': { 'element': 'textarea', 'hhselector3': '.b-resume-keywords', 'hhselector2': '[data-qa="skills-element"]', 'hhselector': "[data-qa='bloko-tag__text']", 'params': { 'name': 'achievements' } },
-        'Other info': { 'element': 'textarea','hhselector3': '.b-resume-additional', 'hhselector2':  ".resume__twocols_cell" ,  'hhselector': "[data-qa='resume-block-skills']", 'params': { 'name': 'additional_info' } },
+        'Other info': { 'element': 'textarea', 'hhselector3': '.b-resume-additional', 'hhselector2': ".resume__twocols_cell", 'hhselector': "[data-qa='resume-block-skills']", 'params': { 'name': 'additional_info' } },
         'Languages': { 'element': 'input', 'hhselector3': '.b-resume-additional .b-forma-table tr', 'hhselector2': '.resume-block .resume-block', 'hhselector': "[data-qa='resume-block-language-item']", 'params': { 'name': 'languages', 'type': 'text' } },
         'Employment': { 'element': 'input', 'hhselector2': ".resume__position__specialization ul", 'hhselector': "[data-qa='resume-block-specialization-category']", 'params': { 'name': 'игын', 'type': 'text' } }
     }
@@ -44,7 +44,7 @@ var button = ToggleButton({
 
 var panel = panels.Panel({
     width: 300,
-    height: 270,//230,
+    height: 270, //230,
     contentURL: data.url("menu.html"),
     contentScriptFile: data.url("menu.js")
 });
@@ -66,7 +66,7 @@ var text_entry = panels.Panel({
     height: 550,
     contentURL: data.url("get-text.html"),
     contentScriptFile: data.url("get-text.js"),
-    contentScriptOptions: {tableContent: savingFormInfo['table']}
+    contentScriptOptions: { tableContent: savingFormInfo['table'] }
 });
 
 getActiveView(text_entry).setAttribute("noautohide", true);
@@ -104,11 +104,15 @@ import_panel.port.on("close-window", function() {
 import_panel.port.on('open-file', function(text) {
     tabs.open(text);
 });
+//set listeners for finding panel
+import_panel.on("show", function() {
+    import_panel.port.emit("show");
+});
 
 
 //otherkeywords - текст с разделителями-запятыми
 //функция вернет текст с разделителями-запятыми
-function analyzeKeywordsInText(otherkeywords, analyzeText){
+function analyzeKeywordsInText(otherkeywords, analyzeText) {
     var keywords = [];
     var myAnalyzer = new analyze.VsStat();
     var res = myAnalyzer.getStat(); //now we have array of word combination - collocations
@@ -141,13 +145,13 @@ import_panel.port.on('import', function(text) {
     }
 
     import_panel.port.emit('good-dir', working_dir);
-    //console.log(files);
+
     var arr = [];
     for (var i = 0; i < files.length; i++) {
 
         var pageWorker = require("sdk/page-worker").Page({
             contentScriptFile: data.url("saving.js"),
-            contentScriptOptions: { asResume: asResume,'table': savingFormInfo['table'], 'import': true},
+            contentScriptOptions: { asResume: asResume, 'table': savingFormInfo['table'], 'import': true },
             contentURL: files[i]
         });
         pageWorker.port.on("save-data", function(text) {
@@ -181,7 +185,7 @@ import_panel.port.on('import', function(text) {
                 }*/
             }
         });
-    }   
+    }
 
     //import_panel.port.emit("imported");
 
@@ -198,12 +202,10 @@ function menu(text) {
         return;
     } else {
         fullDBPath = fileIO.join(path, dbFile);
-        Task.spawn(function* () {
+        Task.spawn(function*() {
             try {
-                var conn = yield Sqlite.openConnection({path: fullDBPath});
-                checking(conn);
+                yield checking(fullDBPath, panel);
                 panel.port.emit('good-dir', path);
-
                 switch (menuItem) {
                     case 'save':
                         savePage(false);
@@ -218,7 +220,7 @@ function menu(text) {
                         importPages();
                         break;
                 }
-            } catch(e) {
+            } catch (e) {
                 path = -1;
                 panel.port.emit('bad-dir');
             }
@@ -237,7 +239,7 @@ function checkingPath(path) {
         path = path.replace(/((\\)+)/gm, "\/");
         try {
             val = fileIO.exists(path);
-        } catch(e) {
+        } catch (e) {
             val = false;
         }
     }
@@ -247,51 +249,50 @@ function checkingPath(path) {
         return -1;
 }
 
-function checking(conn) {
-    Task.spawn(function* checkDatabase() {
-        try {
-            var query = 'CREATE TABLE if not exists files';
-            query += '(id integer PRIMARY KEY autoincrement, path varchar(400));';
-            yield conn.execute(query);
-            query = 'CREATE TABLE if not exists categories';
-            query += '(id integer PRIMARY KEY autoincrement, name varchar(200));';
-            yield conn.execute(query);
-            query = 'CREATE TABLE if not exists keywords';
-            query += '(id integer PRIMARY KEY autoincrement, keyword varchar(500),cat_id integer,';
-            query += 'FOREIGN KEY(cat_id) REFERENCES categories(id) ON DELETE CASCADE);';
-            yield conn.execute(query);
-            query = 'CREATE TABLE if not exists links';
-            query += '(id integer PRIMARY KEY autoincrement,kw_id integer,file_id integer,';
-            query += 'FOREIGN KEY(kw_id) REFERENCES keywords(id) ON DELETE CASCADE,';
-            query += 'FOREIGN KEY(file_id) REFERENCES files(id) ON DELETE CASCADE);';
-            yield conn.execute(query);
-            var result = [];
-            query = 'SELECT * FROM categories';
-            var res = yield conn.execute(query);
-            for (var row = 0; row < res.length; row++) {
-                result.push(res[row].getResultByName("name"));
-            }
-            var dataToInsert = [];
-            for (var i in savingFormInfo['table']) {
-                if (result.indexOf(i) == -1)
-                    dataToInsert.push({ 'nameCat': i });
-            }
-            if (dataToInsert.length != 0) {
-                console.log('There are no categories', dataToInsert)
-                query = 'INSERT INTO categories(name) VALUES (:nameCat);';
-                yield conn.execute(query, dataToInsert);
-                query = 'SELECT * FROM categories';
-                res = yield conn.execute(query);
-                /*for (var row = 0; row < res.length; row++) {
-                    console.log(res[row].getResultByName("name"));
-                }*/
-            }
-        } catch (e) {
-            panel.port.emit('error', 'There are problems whith checking database scheme: ' + e.toString());
-        } finally {
-            yield conn.close();
+function* checking(fullDBPath, messPanel) {
+    var conn;
+    try {
+        conn = yield Sqlite.openConnection({ path: fullDBPath });
+        var query = 'CREATE TABLE if not exists files';
+        query += '(id integer PRIMARY KEY autoincrement, path varchar(400));';
+        yield conn.execute(query);
+        query = 'CREATE TABLE if not exists categories';
+        query += '(id integer PRIMARY KEY autoincrement, name varchar(200));';
+        yield conn.execute(query);
+        query = 'CREATE TABLE if not exists keywords';
+        query += '(id integer PRIMARY KEY autoincrement, keyword varchar(500),cat_id integer,';
+        query += 'FOREIGN KEY(cat_id) REFERENCES categories(id) ON DELETE CASCADE);';
+        yield conn.execute(query);
+        query = 'CREATE TABLE if not exists links';
+        query += '(id integer PRIMARY KEY autoincrement,kw_id integer,file_id integer,';
+        query += 'FOREIGN KEY(kw_id) REFERENCES keywords(id) ON DELETE CASCADE,';
+        query += 'FOREIGN KEY(file_id) REFERENCES files(id) ON DELETE CASCADE);';
+        yield conn.execute(query);
+        var result = [];
+        query = 'SELECT * FROM categories';
+        var res = yield conn.execute(query);
+        for (var row = 0; row < res.length; row++) {
+            result.push(res[row].getResultByName("name"));
         }
-    });
+        var dataToInsert = [];
+        for (var i in savingFormInfo['table']) {
+            if (result.indexOf(i) == -1)
+                dataToInsert.push({ 'nameCat': i });
+        }
+        if (dataToInsert.length != 0) {
+            console.log('There are no categories', dataToInsert);
+            query = 'INSERT INTO categories(name) VALUES (:nameCat);';
+            yield conn.execute(query, dataToInsert);
+            query = 'SELECT * FROM categories';
+            res = yield conn.execute(query);
+        }
+    } catch (e) {
+        console.log('There are problems whith checking database scheme: ' + e.toString());
+        messPanel.show();
+        messPanel.port.emit('error', 'There are problems whith checking database scheme: ' + e.toString());
+    } finally {
+        yield conn.close();
+    }
 }
 
 function importPages() {
@@ -301,7 +302,7 @@ function importPages() {
 function savePage(asResume) {
     var saving = tabs.activeTab.attach({
         contentScriptFile: data.url("saving.js"),
-        contentScriptOptions: { asResume: asResume,'table': savingFormInfo['table'], 'import': false}
+        contentScriptOptions: { asResume: asResume, 'table': savingFormInfo['table'], 'import': false }
     });
 
     saving.port.on("save-data", function(text) {
@@ -313,10 +314,10 @@ function savePage(asResume) {
 
         asResume = savingData['asResume'];
         //find keywords
-        if (asResume ) {
+        if (asResume) {
             var tableContent;
 
-            if (ishh){
+            if (ishh) {
                 tableContent = savingData['keywords'];
             } else {
                 tableContent = savingFormInfo['table'];
@@ -389,14 +390,16 @@ function savePage(asResume) {
                     saving_entry.port.emit('bad-dir');
                     return;
                 }
+
                 saving_entry.port.emit('good-dir', working_dir);
+
                 var arr = [];
-	            arr.push({
-	                'keywords': keywords,
-	                'webpage': webpage,
-	                'filename': filename,
-	                'asResume': asResume
-	            })
+                arr.push({
+                    'keywords': keywords,
+                    'webpage': webpage,
+                    'filename': filename,
+                    'asResume': asResume
+                })
                 saveAndWriteInfo(fullDBPath, working_dir, arr, saving_entry, "saved");
                 //saveAndWriteInfo(fileIO.join(working_dir, filename), webpage, fullDBPath, keywords, saving_entry, asResume);
             } catch (e) {
@@ -407,7 +410,7 @@ function savePage(asResume) {
     });
 }
 
-function * writeInDB(conn, filename, keywords, users_pane, signal, asResume) {
+function* writeInDB(conn, filename, keywords, users_pane, signal, asResume) {
     try {
         var query = 'DELETE FROM files WHERE path = ?';
         yield conn.execute(query, [filename]);
@@ -439,7 +442,7 @@ function * writeInDB(conn, filename, keywords, users_pane, signal, asResume) {
         }
         var keywordIds = [];
         var queryarr = [];
-        for (var i = 0 ; i < kw.length; i++) {
+        for (var i = 0; i < kw.length; i++) {
             queryarr.push('?');
         }
         query = 'SELECT * FROM keywords WHERE keyword IN (' + queryarr.join(',') + ');';
@@ -455,8 +458,6 @@ function * writeInDB(conn, filename, keywords, users_pane, signal, asResume) {
                 keywordIds.push(result[row].getResultByName("id"));
             }
         }
-        //console.log('keywords for write', keywords);
-        //console.log('keywords not write', keywordIds);
         var keywordCount = 0;
         for (var cat in categories) {
             if (kw_arrays[categories[cat]] == undefined)
@@ -478,15 +479,16 @@ function * writeInDB(conn, filename, keywords, users_pane, signal, asResume) {
         //users_pane.show();
         users_pane.port.emit(signal, filename);
 
-    }  catch (e) {
-        users_pane.port.emit("error", 'It was problem with saving '+ filename + '\n' + e);
+    } catch (e) {
+        users_pane.port.emit("error", 'It was problem with saving ' + filename + '\n' + e);
     }
 }
 
-function saveAndWriteInfo(fullDBPath, working_dir, arr, import_panel, signal) {
-    Task.spawn(function* () {
+function saveAndWriteInfo(fullDBPath, working_dir, arr, my_panel, signal) {
+    Task.spawn(function*() {
         try {
-            var conn = yield Sqlite.openConnection({path: fullDBPath});
+            yield checking(fullDBPath, my_panel);
+            var conn = yield Sqlite.openConnection({ path: fullDBPath });
             yield conn.execute('PRAGMA foreign_keys = ON');
 
             for (var k = 0; k < arr.length; k++) {
@@ -499,11 +501,11 @@ function saveAndWriteInfo(fullDBPath, working_dir, arr, import_panel, signal) {
 
                 ByteWriter.write(arr[k]['webpage']);
                 ByteWriter.close();
+                yield writeInDB(conn, filename, arr[k]['keywords'], my_panel, signal, arr[k]['asResume']);
 
-                console.log('saving', arr[k]['filename']);
-                yield writeInDB(conn, filename, arr[k]['keywords'], import_panel, signal, arr[k]['asResume']);
-             
             }
+        } catch (e) {
+            my_panel.port.emit("error", 'It was problem with saving ' + e);
         } finally {
             console.log('save finally');
             yield conn.close();
@@ -525,7 +527,7 @@ function findText(text) {
         findByKeyword(fullDBPath, findInfo);
     } else {
         if (!data['strictFind'])
-            findInfo = findInfo.toLowerCase().replace(/[^a-zA-ZА-Яа-я0-9\s]/g, " ").replace(/(( )+)/gm, ",").split(',');
+            findInfo = findInfo.toLowerCase().replace(/[^a-zA-ZА-Яа-я0-9\#\+\s]/g, " ").replace(/(( )+)/gm, ",").split(',');
         try {
             path = checkingPath(path);
             if (path == -1) {
@@ -603,8 +605,8 @@ We have list with this dictionaries, because user can make condition like:
 Salary > 20000 AND Salary <= 100000.
 So, in our system it'll present like:
 {'Salary':[
-	{'operand': '>', 'value': '20000'},
-	{'operand': '<=', 'value': '100000'}
+    {'operand': '>', 'value': '20000'},
+    {'operand': '<=', 'value': '100000'}
 ],
 ......
 }
@@ -614,8 +616,8 @@ Every 'value' in structure {'operand': '', 'value': ''} will separate by all non
 so,now value is list, and we collect keywordsArr from all keywords in this category.
 For example, user wanted Skills LIKE 'Программист,дизайнер' and Skills LIKE 'администратор'. In our system it'll be:
 {'Skills':[
-	{'operand': 'LIKE', 'value': 'Программист,дизайнер'},
-	{'operand': '=', 'value': 'администратор,html'}
+    {'operand': 'LIKE', 'value': 'Программист,дизайнер'},
+    {'operand': '=', 'value': 'администратор,html'}
 ],
 ......
 }
@@ -632,7 +634,8 @@ function findByKeyword(fullDBPath, allKeywords) {
 
     Task.spawn(function* demoDatabase() {
         try {
-            var conn = yield Sqlite.openConnection({path: fullDBPath});
+            yield checking(fullDBPath, text_entry);
+            var conn = yield Sqlite.openConnection({ path: fullDBPath });
             var isEverythyngOkay = false;
             var categories = {};
             query = 'SELECT * FROM categories';
@@ -640,7 +643,8 @@ function findByKeyword(fullDBPath, allKeywords) {
             for (var row = 0; row < result.length; row++) {
                 categories[result[row].getResultByName("name")] = result[row].getResultByName("id");
             }
-            var keywords_result = {}, keywords_count = 0;
+            var keywords_result = {},
+                keywords_count = 0;
             for (var cat_name in allKeywords) {
 
                 if (categories[cat_name] != undefined && cat_name.indexOf('date') != -1) {
@@ -652,22 +656,22 @@ function findByKeyword(fullDBPath, allKeywords) {
                     keywords_result[keywords_count + '_' + cat_name] = yield findByPayment(conn, allKeywords[cat_name], categories[cat_name]);
                     keywords_count++;
                     continue;
-                }//SELECT * FROM keywords WHERE cast(keyword as int)>60000 AND cast(keyword as int)<80000
-                
+                } //SELECT * FROM keywords WHERE cast(keyword as int)>60000 AND cast(keyword as int)<80000
+
                 var keywordsArr = [];
                 var kwItem = allKeywords[cat_name];
                 for (var i = 0; i < kwItem.length; i++) {
                     var infoarr = [];
                     if (kwItem[i]['operand'].toLowerCase() == 'LIKE'.toLowerCase())
-                        infoarr = ('%' + kwItem[i]['value'].replace(/[^a-zA-ZА-Яа-я0-9\s]/g, " ").replace(/(( )+)/gm, "%,%") + '%').split(',');
+                        infoarr = ('%' + kwItem[i]['value'].replace(/[^a-zA-ZА-Яа-я0-9\+\#\s]/g, " ").replace(/(( )+)/gm, "%,%") + '%').split(',');
                     else
-                        infoarr = kwItem[i]['value'].toLowerCase().replace(/[^a-zA-ZА-Яа-я0-9\s]/g, " ").replace(/(( )+)/gm, ",").split(',');
+                        infoarr = kwItem[i]['value'].toLowerCase().replace(/[^a-zA-ZА-Яа-я0-9\+\#\s]/g, " ").replace(/(( )+)/gm, ",").split(',');
                     for (var j = 0; j < infoarr.length; j++) {
-                    	if (infoarr[j] != '%%')
-                        	keywordsArr.push({'value': infoarr[j], 'operand': kwItem[i]['operand']});
+                        if (infoarr[j] != '%%')
+                            keywordsArr.push({ 'value': infoarr[j], 'operand': kwItem[i]['operand'] });
                     }
                 }
-                
+
                 for (var i = 0; i < keywordsArr.length; i++, keywords_count++) {
                     keywords_result[i + '_' + cat_name] = [];
                     query = 'SELECT id, keyword FROM keywords WHERE ';
@@ -681,45 +685,41 @@ function findByKeyword(fullDBPath, allKeywords) {
                     for (var row = 0; row < result.length; row++) {
                         keywords_id.push(result[row].getResultByName("id"));
                     }
-                    //console.log('keywords_id', keywords_id);
 
                     if (keywords_id.length != 0) {
-                    	while (keywords_id.length > 0) {
-	                        query = 'SELECT count(links.id) AS count,files.path AS path FROM links INNER JOIN files ON links.file_id=files.id WHERE ';
-	                        var whereClause = [];
-	                        for (var j = 0; j < Math.min(keywords_id.length, 500); j++) {
-	                            whereClause.push('?');
-	                        }
-	                        query += ' links.kw_id IN (' + whereClause.join(',') + ') GROUP BY (files.path);'
-	                        console.log('query',query);
-	                        console.log('keywords_id', keywords_id);
-	                        result = yield conn.execute(query, keywords_id.splice(0, 500));
-	                        for (var row = 0; row < result.length; row++) {
-	                            if (keywords_result[i + '_' + cat_name].indexOf(result[row].getResultByName("path")) == -1)
-	                                keywords_result[i + '_' + cat_name].push(result[row].getResultByName("path"));
-	                        }
-	                    }
+                        while (keywords_id.length > 0) {
+                            query = 'SELECT count(links.id) AS count,files.path AS path FROM links INNER JOIN files ON links.file_id=files.id WHERE ';
+                            var whereClause = [];
+                            for (var j = 0; j < Math.min(keywords_id.length, 500); j++) {
+                                whereClause.push('?');
+                            }
+                            query += ' links.kw_id IN (' + whereClause.join(',') + ') GROUP BY (files.path);';
+                            result = yield conn.execute(query, keywords_id.splice(0, 500));
+                            for (var row = 0; row < result.length; row++) {
+                                if (keywords_result[i + '_' + cat_name].indexOf(result[row].getResultByName("path")) == -1)
+                                    keywords_result[i + '_' + cat_name].push(result[row].getResultByName("path"));
+                            }
+                        }
                     }
                 }
             }
-            var files = {}, maxiimum = 0;
-            for (var i in keywords_result){
+            var files = {},
+                maxiimum = 0;
+            for (var i in keywords_result) {
                 for (var j = 0; j < keywords_result[i].length; j++) {
                     if (files[keywords_result[i][j]] == undefined)
                         files[keywords_result[i][j]] = 0;
-                    files[keywords_result[i][j]] ++;
+                    files[keywords_result[i][j]]++;
                 }
             }
             var res = [];
-            for (var i in files){
+            for (var i in files) {
                 if (files[i] >= keywords_count)
                     res.push(i)
             }
-            //console.log(res);
 
             sendFindInfo(res, res.length);
             isEverythyngOkay = true;
-            yield conn.close();
         } catch (e) {
             text_entry.show();
             text_entry.port.emit("error", 'It was problems with finding: ' + e);
@@ -735,7 +735,6 @@ function* findByDate(conn, keywords, category_id) {
     var filesresult = [];
     query = 'SELECT id, keyword FROM keywords WHERE ';
     query += 'cat_id=' + category_id + ';';
-    //console.log('query', query);
     //SELECT * FROM keywords WHERE cast(keyword as int)>60000 AND cast(keyword as int)<80000
     result = yield conn.execute(query);
     var keywords_id = [];
@@ -744,16 +743,13 @@ function* findByDate(conn, keywords, category_id) {
         if (compareDate(tmp, keywords))
             keywords_id.push(result[row].getResultByName("id"));
     }
-    //console.log('keywords_id', keywords_id);
     if (keywords_id.length != 0) {
         query = 'SELECT count(links.id) AS count,files.path AS path FROM links INNER JOIN files ON links.file_id=files.id WHERE ';
         var whereClause = [];
         for (var j = 0; j < keywords_id.length; j++) {
             whereClause.push('?');
         }
-        query += ' links.kw_id IN (' + whereClause.join(',') + ') GROUP BY (files.path);'
-        //console.log('query',query);
-        //console.log('keywords_id', keywords_id);
+        query += ' links.kw_id IN (' + whereClause.join(',') + ') GROUP BY (files.path);';
         result = yield conn.execute(query, keywords_id);
         for (var row = 0; row < result.length; row++) {
             if (filesresult.indexOf(result[row].getResultByName("path")) == -1)
@@ -775,23 +771,19 @@ function* findByPayment(conn, keywords, category_id) {
         where_clause.push('cast(keyword as int)' + keywords[i]['operand'] + keywords[i]['value']);
     }
     query += where_clause.join(' AND ') + ';';
-    //console.log('query', query);
     //SELECT * FROM keywords WHERE cast(keyword as int)>60000 AND cast(keyword as int)<80000
     result = yield conn.execute(query);
     var keywords_id = [];
     for (var row = 0; row < result.length; row++) {
         keywords_id.push(result[row].getResultByName("id"));
     }
-    //console.log('keywords_id', keywords_id);
     if (keywords_id.length != 0) {
         query = 'SELECT count(links.id) AS count,files.path AS path FROM links INNER JOIN files ON links.file_id=files.id WHERE ';
         var whereClause = [];
         for (var j = 0; j < keywords_id.length; j++) {
             whereClause.push('?');
         }
-        query += ' links.kw_id IN (' + whereClause.join(',') + ') GROUP BY (files.path);'
-        //console.log('query',query);
-        //console.log('keywords_id', keywords_id);
+        query += ' links.kw_id IN (' + whereClause.join(',') + ') GROUP BY (files.path);';
         result = yield conn.execute(query, keywords_id);
         for (var row = 0; row < result.length; row++) {
             if (filesresult.indexOf(result[row].getResultByName("path")) == -1)
@@ -821,7 +813,7 @@ function compareDate(value, keywords) {
         try {
             if (eval(str) == false)
                 return false;
-        }catch(e) {
+        } catch (e) {
             return false;
         }
     }

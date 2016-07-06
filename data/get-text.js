@@ -1,19 +1,19 @@
-
 var textArea = document.getElementById("result-list");
 var resultArea = document.getElementById("result");
 var findText = document.getElementById("edit-box");
 var dir = document.getElementById("finding-dir");
 var lbl = document.getElementById('res-count');
-var keywordPane = document.getElementById('keywords-link');
-var usualPane = document.getElementById('usual-link');
+var keywordTab = document.getElementById('keywords');
 var isStrict = document.getElementById('find-strict');
 var findBtn = document.getElementById("find");
 var keywordsTable = document.getElementById("resume-keys");
 var addClauseImage = document.getElementById("add-clause");
 
 //set listeners for DOM objects
-keywordPane.addEventListener('click', function(evt) { openTab(evt, 'keywords'); }, false);
-usualPane.addEventListener('click', function(evt) { openTab(evt, 'usual'); }, false);
+var tabs = document.getElementsByClassName('tablinks');
+for (var i = 0; i < tabs.length; i++) {
+    tabs[i].addEventListener('click', function(evt) { openTab(evt); }, false);
+}
 findBtn.addEventListener('click', submit, false);
 addClauseImage.addEventListener('click', addRow, false);
 document.getElementById('close-icon').addEventListener('click', closeWindow, false);
@@ -22,7 +22,7 @@ document.getElementById('close-btn').addEventListener('click', closeWindow, fals
 //prepare panel(getting tablecontent(for select categories),choosing tab, adding row)
 //row: select with categories, select with operands, input for user's value, delete row button/
 var tableContent = self.options.tableContent;
-document.getElementById('keywords-link').click();
+keywordTab.click();
 addRow();
 
 //port listeners
@@ -55,9 +55,9 @@ function closeWindow() {
 
 function submit() {
     var data;
-    var isKeyword = (keywordPane.className.indexOf('active') != -1);
-    var strictFind = isStrict.checked && (keywordPane.className.indexOf('active') == -1);
-    var text = keywordPane.className.indexOf('active') == -1 ? findText.value : getKeywords();
+    var isKeyword = (keywordTab.className.indexOf('active') != -1);
+    var strictFind = isStrict.checked && (keywordTab.className.indexOf('active') == -1);
+    var text = keywordTab.className.indexOf('active') == -1 ? findText.value : getKeywords();
     if (dir.value.length > 0 || isKeyword) {
         data = {
             'text': text,
@@ -79,7 +79,7 @@ function getKeywords() {
     for (var i = 0; i < selectCat.length; i++) {
         if (result[selectCat[i].value] == undefined)
             result[selectCat[i].value] = [];
-        var info = {'operand': 'LIKE', 'value': ''};
+        var info = { 'operand': 'LIKE', 'value': '' };
         for (var j = 0; j < selectOper.length; j++) {
             if (selectCat[i].name == selectOper[j].name) {
                 info['operand'] = selectOper[j].value;
@@ -111,7 +111,7 @@ function deleteRow(event) {
 }
 
 function fillingSelect(selectElem, list) {
-    for (var i = 0; i < list.length; i++){
+    for (var i = 0; i < list.length; i++) {
         var option = document.createElement("option");
         option.value = list[i];
         option.text = list[i];
@@ -125,9 +125,9 @@ function onSelectChange(e) {
     var rowIndividualName = e.target.name;
     var arr = document.getElementsByName(rowIndividualName);
     var input, operand;
-    var list = ['=','>','<','!=','>=','<='];
+    var list = ['=', '>', '<', '!=', '>=', '<='];
 
-    for (var i = 0; i < arr.length; i++){
+    for (var i = 0; i < arr.length; i++) {
         if (arr[i].tagName == 'INPUT')
             input = arr[i];
         if (arr[i].className == 'select-operations')
@@ -137,7 +137,7 @@ function onSelectChange(e) {
     while (operand.children.length > 0) {
         operand.remove(0);
     }
-
+    input.value = '';
     if (e.target.value.toLowerCase().indexOf('date') != -1) {
         input.type = 'date';
         input.placeholder = 'ГГГГ.ММ.ДД';
@@ -147,13 +147,14 @@ function onSelectChange(e) {
     input.type = 'text';
     input.placeholder = '';
     if (e.target.value.toLowerCase().indexOf('salary') != -1) {
-        list = ['=','>','<','<>','>=','<='];
+        list = ['=', '>', '<', '<>', '>=', '<='];
     } else {
-        list = ['LIKE','=','<>']; // all other categories - not salary and not date
-    }    
+        list = ['LIKE', '=', '<>']; // all other categories - not salary and not date
+    }
     fillingSelect(operand, list);
 }
 
+/*this function adds row in keyword table. One row for one condition*/
 function addRow() {
     var rowIndividualName = (new Date()).toTimeString();
 
@@ -164,32 +165,30 @@ function addRow() {
     var td = document.createElement('td');
     var selectList = document.createElement('select');
     var option = document.createElement("option");
+    option.value = 'all_cat';
+    option.text = 'All categories';
+    selectList.appendChild(option);
 
-    for (var i in tableContent){
-        var option = document.createElement("option");
+    for (var i in tableContent) {
+        option = document.createElement("option");
         option.value = i;
         option.text = i;
         selectList.appendChild(option);
     }
-    option.value = 'all_cat';
-    option.text = 'All categories';
-    selectList.appendChild(option);
     selectList.name = rowIndividualName;
-    selectList.setAttribute('class','select-categories');
+    selectList.setAttribute('class', 'select-categories');
     selectList.addEventListener('change', onSelectChange, false);
     td.appendChild(selectList);
-    //td.setAttribute('style', 'width: 100px;');
     tr.appendChild(td);
 
 
     var td1 = document.createElement('td');
-    var list = ['LIKE','=','<>'];
+    var list = ['LIKE', '=', '<>'];
     var selectOperand = document.createElement('select');
 
     selectOperand.name = rowIndividualName;
-    selectOperand.setAttribute('class','select-operations');
+    selectOperand.setAttribute('class', 'select-operations');
     fillingSelect(selectOperand, list);
-    //td.setAttribute('style', 'width: 60px !important;');
     td1.appendChild(selectOperand);
     tr.appendChild(td1);
 
@@ -236,13 +235,11 @@ function setInfo(links, count) {
             self.port.emit('open-file', this.value);
         }, false)
     }
-    //textArea.value = text;
 }
 
-function openTab(evt, tabName) {
-    // Declare all variables
+function openTab(evt) {
     var i, tabcontent, tablinks;
-
+    var tabId = evt.target.id;
     // Get all elements with class="tabcontent" and hide them
     tabcontent = document.getElementsByClassName("tabcontent");
     for (i = 0; i < tabcontent.length; i++) {
@@ -256,7 +253,7 @@ function openTab(evt, tabName) {
     }
 
     // Show the current tab, and add an "active" class to the link that opened the tab
-    document.getElementById(tabName).style.display = "block";
+    document.getElementById(tabId + '-block').style.display = "block";
     evt.currentTarget.className += " active";
     setInfo('', 0);
 }

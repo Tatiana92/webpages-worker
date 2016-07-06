@@ -2,30 +2,30 @@ var content = unescape(encodeURIComponent(document.documentElement.outerHTML));
 var keywords = '';
 var date = new Date();
 var options = {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  weekday: 'long',
-  hour: 'numeric',
-  minute: 'numeric',
-  second: 'numeric'
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric'
 };
 var table_indx = 0;
 var filename = date.toLocaleString("en-US", options);
 var data = {};
 
 if (document.title.trim().length > 0) {
-	filename = document.title.trim();
-    keywords = filename.replace(/[\:\.\|\"\*\?\\\/<>\+]/g," ").split(' ').join(',');
+    filename = document.title.trim();
+    keywords = filename.replace(/[\:\.\|\"\*\?\\\/<>]/g, " ").split(' ').join(',');
 }
-filename = filename.replace(/[\:\.\|\"\*\?\\\/<>\+]/g,"-") + '.html';
+filename = filename.replace(/[\:\.\|\"\*\?\\\/<>]/g, "-") + '.html';
 keywords += ',' + document_keywords();
 
 content = '<meta charset="utf-8"/>' + content; //without it you will have bad text in webpage
 
 data = {
-	'filename': filename,
-	'content': content,
+    'filename': filename,
+    'content': content,
     'keywords': keywords,
     'analyzeText': document.documentElement.innerText
 };
@@ -36,6 +36,8 @@ if (self.options.asResume == true) {
             for (var i in self.options.table) {
                 if (self.options.table[i]['value'] == undefined)
                     self.options.table[i]['value'] = [];
+                /*'Date of Birth' process separately from others.Usually it's in content element,
+                but other properties are in innerText.*/
                 if (i.toLowerCase().indexOf('date') != -1) {
                     var elemArr = document.querySelectorAll(self.options.table[i]['hhselector']);
                     if (elemArr.length == 0) {
@@ -49,6 +51,8 @@ if (self.options.asResume == true) {
                     }
                     continue;
                 }
+                /*Employment process separately, because usually it is in noname DOM Element, 
+                and we need to find it,using neighbour*/
                 if (i.indexOf('Employment') != -1) {
                     var elem = document.querySelectorAll(self.options.table[i]['hhselector'])[0];
                     if (!elem) {
@@ -56,7 +60,10 @@ if (self.options.asResume == true) {
                     }
                     if (elem)
                         if (elem.parentNode.nextSibling) {
-                            var myVal = elem.parentNode.nextSibling.innerText;
+                            var myVal;
+                            myVal = elem.parentNode.nextSibling.innerText;
+                            if (myVal == undefined)
+                                myVal = elem.parentNode.nextSibling.textContent;
                             if (myVal.toLowerCase().indexOf('employment') != -1) {
                                 myVal = myVal.substr('employment'.length + 1, myVal.length);
                             }
@@ -64,10 +71,11 @@ if (self.options.asResume == true) {
                         }
                     continue;
                 }
-                if (i.indexOf('Work') != -1) {//- Workfor (var row = 0; row<arr.length; row++) {
+                /*work block contains other blocks and we need to have more than one selector*/
+                if (i.indexOf('Work') != -1) {
                     var arr = document.querySelectorAll(self.options.table[i]['hhselector']['block']);
                     if (arr.length == 0) {
-                        arr = document.querySelectorAll(self.options.table[i]['hhselector2']['block']);//old hh
+                        arr = document.querySelectorAll(self.options.table[i]['hhselector2']['block']); //old hh
                     }
                     for (var j = 0; j < arr.length; j++) {
                         var tmparr = arr[j].querySelectorAll(self.options.table[i]['hhselector']['company']);
@@ -82,28 +90,32 @@ if (self.options.asResume == true) {
                         }
                     }
                     if (arr.length == 0) {
-                        arr = document.querySelectorAll(self.options.table[i]['hhselector3']);//very old hh
+                        arr = document.querySelectorAll(self.options.table[i]['hhselector3']); //very old hh
                         if (arr.length > 0)
                             self.options.table[i]['value'].push(arr[0].innerText);
                     }
                     continue;
                 }
+                /*YAHOOOO!!!!at last!it's usual processing!*/
                 var elemArr = document.querySelectorAll(self.options.table[i]['hhselector']);
+                //maybe it's old hh page
                 if (elemArr.length == 0 && self.options.table[i]['hhselector2'] != undefined) {
                     elemArr = document.querySelectorAll(self.options.table[i]['hhselector2']);
+                    //getting language info in old hh is nontrivial
                     if (i.indexOf('Languag') != -1 && elemArr.length != 0) {
                         for (var j = 0; j < elemArr.length; j++) {
                             if (elemArr[j].innerText.toLowerCase().indexOf('язык') != -1) {
-                                for (var k = 1; k < elemArr[j].children.length; k++) {//first element would be a title
+                                for (var k = 1; k < elemArr[j].children.length; k++) { //first element would be a title
                                     self.options.table[i]['value'].push(elemArr[j].children[k].innerText);
                                 }
                             }
                         }
                         continue;
                     }
-
                 }
-                if (elemArr.length == 0){
+                /*maybe it's TOO OLD HH PAGE! salary and language are in tables and no named blocks for them.
+                So, there are table identificators in hhselector3 field. And we need to find info by field name on page.*/
+                if (elemArr.length == 0) {
                     if (i.indexOf('Salary') != -1) {
                         self.options.table[i]['value'].push(findInTable(self.options.table[i]['hhselector3'], 'зарпл'));
                         continue;
@@ -126,15 +138,16 @@ if (self.options.asResume == true) {
             data['ishh'] = true;
             data['keywords'] = self.options.table;
         } catch (e) {
-            console.log('error while parsing - ', e);
+            debugger;
+            console.log('error while parsing - ', e.message, e.stack);
             self.options.asResume = false;
-        }/**/
-        
+        } /**/
+
         sendData(data);
     } else {
         var confirmstr = "this website is not HeadHunter. Our add-on can't parse this page. Do you want select keywords for resume by yourself?It can take some minutes.";
-        var saveUsualText = self.options.import;//if we import page and it isnt headhunter - user cant make resume by his hands!
-        if (!self.options.import) { //if it's import we cannot confirm
+        var saveUsualText = self.options.import; //if we import page and it isnt headhunter - user cant make resume by his hands!
+        if (!self.options.import) { //if it's import user cannot rule
             saveUsualText = !confirm(confirmstr)
             if (saveUsualText == true) {
                 alert("We'll save this webpage as usual webpage");
@@ -178,16 +191,16 @@ function sendData(data) {
     self.port.emit("save-data", JSON.stringify(data));
 }
 
-function document_keywords(){
+function document_keywords() {
     var keywords = '';
     var metas = document.getElementsByTagName('meta');
 
-    for (var x = 0,y = metas.length; x < y; x++) {
+    for (var x = 0, y = metas.length; x < y; x++) {
         if (metas[x].name.toLowerCase() == "keywords") {
             keywords += metas[x].content;
         }
     }
-    return keywords;// != '' ? keywords : false;
+    return keywords;
 }
 
 function runOnKeys(func) {
@@ -197,7 +210,7 @@ function runOnKeys(func) {
     document.onkeydown = function(e) {
         e = e || window.event;
         pressed[e.keyCode] = true;
-        for (var i = 0; i < codes.length; i++) { // проверить, все ли клавиши нажаты
+        for (var i = 0; i < codes.length; i++) {
             if (!pressed[codes[i]]) {
                 return;
             }
@@ -214,15 +227,16 @@ function runOnKeys(func) {
 
 
 function month2num(name) {
-    var month = ['января','февраля','марта','апреля','мая','июня',
-    'июля','августа','сентября','октября','ноября','декабря'];
+    var month = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+        'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ];
 
     for (var i = 0; i < month.length; i++) {
         if (name.indexOf(month[i]) != -1) {
             var str = (i + 1).toString();
             var pad = "00";
             var ans = pad.substring(0, pad.length - str.length) + str;
-            
+
             name = name.replace(month[i], ans);
         }
     }
@@ -234,7 +248,7 @@ function parseValue(value, cat) {
     switch (cat) {
         case 'Date of Birth':
             var birthdate = month2num(value[0].trim());
-            value = birthdate.replace(/[\:\.\-\;\|\"\'\*\?\\\/<>\+\n\t\r ]/g,"^").split('^').join('.');
+            value = birthdate.replace(/[\:\.\-\;\|\"\'\*\?\\\/<>\+\n\t\r ]/g, "^").split('^').join('.');
             break;
         case 'Salary':
 
@@ -247,8 +261,8 @@ function parseValue(value, cat) {
             value = value.join(',').replace(/((\n)+)/gm, ",");
             break;
     }
-    if (['Full name', 'Date of Birth','Skills', 'Position'].indexOf(cat) == -1)
-        result = value.replace(/[\:\.\;\|\"\'\*\?\\\/<>\+\n\t\r\=]/g,"^").split('^').join(',').replace(/((,)+)/gm, ",");
+    if (['Full name', 'Date of Birth', 'Skills', 'Position'].indexOf(cat) == -1)
+        result = value.replace(/[\:\.\;\|\"\'\*\?\\\/<>\n\t\r\=]/g, "^").split('^').join(',').replace(/((,)+)/gm, ",");
     else
         result = value;
 
