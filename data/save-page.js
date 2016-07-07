@@ -1,14 +1,20 @@
-var textArea = document.getElementById("keywords-list");
-var dir = document.getElementById("saving-dir");
-var lbl = document.getElementById('res-count');
-var saveBtn = document.getElementById("save");
-var keywordsTable = document.getElementById("resume-keys");
-var divLoading = document.getElementById('divLoading');
-var tableContent;
-// make eventlisteners.
-saveBtn.addEventListener('click', submit, false);
-document.getElementById('close-icon').addEventListener('click', closeWindow, false);
-document.getElementById('close-btn').addEventListener('click', closeWindow, false);
+try {
+    var textArea = document.getElementById("keywords-list");
+    var dir = document.getElementById("saving-dir");
+    var lbl = document.getElementById('res-count');
+    var saveBtn = document.getElementById("save");
+    var keywordsTable = document.getElementById("resume-keys");
+    var divLoading = document.getElementById('divLoading');
+    var tableContent;
+    // make eventlisteners.
+    saveBtn.addEventListener('click', submit, false);
+    document.getElementById('close-btn').addEventListener('click', closeWindow, false);
+    document.getElementsByClassName('close-icon')[0].addEventListener('click', closeWindow, false);
+    document.getElementsByClassName('menu-icon')[0].addEventListener('click', goToMenu, false);
+} catch (err) {
+    alert('There was error: '+ err.message +';\n' +  err.stack);
+}
+
 
 //port listeners
 
@@ -53,6 +59,10 @@ self.port.on('set-item', function(text) {
     }
 });
 
+/*functions*/
+function goToMenu() {
+    self.port.emit('main-menu', '');
+}
 
 function closeWindow() {
     self.port.emit("close-window");
@@ -111,6 +121,8 @@ function submit() {
         saveBtn.disabled = true;
         divLoading.className += " show";
         self.port.emit("saving-text-entered", JSON.stringify(data));
+    } else {
+        alert('Invalid dir for save!');
     }
 }
 

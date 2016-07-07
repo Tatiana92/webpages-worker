@@ -1,29 +1,34 @@
-var textArea = document.getElementById("result-list");
-var resultArea = document.getElementById("result");
-var findText = document.getElementById("edit-box");
-var dir = document.getElementById("finding-dir");
-var lbl = document.getElementById('res-count');
-var keywordTab = document.getElementById('keywords');
-var isStrict = document.getElementById('find-strict');
-var findBtn = document.getElementById("find");
-var keywordsTable = document.getElementById("resume-keys");
-var addClauseImage = document.getElementById("add-clause");
+try {
+    var textArea = document.getElementById("result-list");
+    var resultArea = document.getElementById("result");
+    var findText = document.getElementById("edit-box");
+    var dir = document.getElementById("finding-dir");
+    var lbl = document.getElementById('res-count');
+    var keywordTab = document.getElementById('keywords');
+    var isStrict = document.getElementById('find-strict');
+    var findBtn = document.getElementById("find");
+    var keywordsTable = document.getElementById("resume-keys");
+    var addClauseImage = document.getElementById("add-clause");
 
-//set listeners for DOM objects
-var tabs = document.getElementsByClassName('tablinks');
-for (var i = 0; i < tabs.length; i++) {
-    tabs[i].addEventListener('click', function(evt) { openTab(evt); }, false);
+    //set listeners for DOM objects
+    var tabs = document.getElementsByClassName('tablinks');
+    for (var i = 0; i < tabs.length; i++) {
+        tabs[i].addEventListener('click', function(evt) { openTab(evt); }, false);
+    }
+    findBtn.addEventListener('click', submit, false);
+    addClauseImage.addEventListener('click', addRow, false);
+    document.getElementById('close-btn').addEventListener('click', closeWindow, false);
+    document.getElementsByClassName('close-icon')[0].addEventListener('click', closeWindow, false);
+    document.getElementsByClassName('menu-icon')[0].addEventListener('click', goToMenu, false);
+    //prepare panel(getting tablecontent(for select categories),choosing tab, adding row)
+    //row: select with categories, select with operands, input for user's value, delete row button/
+    var tableContent = self.options.tableContent;
+    keywordTab.click();
+    addRow();
+} catch (err) {
+    alert('There was error: '+ err.message +';\n' +  err.stack);
 }
-findBtn.addEventListener('click', submit, false);
-addClauseImage.addEventListener('click', addRow, false);
-document.getElementById('close-icon').addEventListener('click', closeWindow, false);
-document.getElementById('close-btn').addEventListener('click', closeWindow, false);
 
-//prepare panel(getting tablecontent(for select categories),choosing tab, adding row)
-//row: select with categories, select with operands, input for user's value, delete row button/
-var tableContent = self.options.tableContent;
-keywordTab.click();
-addRow();
 
 //port listeners
 self.port.on("show", function onShow() {
@@ -53,6 +58,13 @@ function closeWindow() {
     self.port.emit("close-window");
 }
 
+function goToMenu() {
+    self.port.emit('main-menu', '');
+}
+
+/*When you want to start finding, you need to click find button,and then submit function will started.
+Here we checked,if you want to find keywords, if no - you need to type dirpath. 
+if you want to find by keywords - we call getKeywords function.*/
 function submit() {
     var data;
     var isKeyword = (keywordTab.className.indexOf('active') != -1);
@@ -66,9 +78,28 @@ function submit() {
             'keyword': isKeyword
         }
         self.port.emit("text-entered", JSON.stringify(data));
+    } else {
+        alert('Invalid dir for find!');
     }
 }
 
+/*this function prepares keywords dictionary. in this dict categories are keys,
+and values are list with dictionaries like {'operand': '', 'value': ''}. 
+'operand' is string from list  ['LIKE', '<>','=','>','<','!=','>=','<='], 'value' is value from inputs.
+We have list with this dictionaries, because user can make condition like:
+Salary > 20000 AND Salary <= 100000.
+So, in our system it'll present like:
+{'Salary':[
+    {'operand': '>', 'value': '20000'},
+    {'operand': '<=', 'value': '100000'}
+],
+......
+}
+TODO
+
+think about date search!it's difficult,because we need to decide date format.I mean, DD.MM.YYYY or MM.DD.YYYY or other way/
+
+*/
 function getKeywords() {
     var result = {};
     var selectCat = keywordsTable.getElementsByClassName('select-categories');
@@ -119,8 +150,8 @@ function fillingSelect(selectElem, list) {
     }
 }
 
-//when selected category
-//it fills select with operands
+/*when selected category it fills select with operands.
+it calls fillingSelect function*/
 function onSelectChange(e) {
     var rowIndividualName = e.target.name;
     var arr = document.getElementsByName(rowIndividualName);

@@ -83,6 +83,10 @@ text_entry.port.on("close-window", function() {
     handleHide();
 });
 
+text_entry.port.on("main-menu", function() {
+    mainMenu(text_entry);
+});
+
 text_entry.port.on('open-file', function(text) {
     tabs.open(text);
 });
@@ -95,6 +99,10 @@ var import_panel = panels.Panel({
     contentScriptFile: data.url("import-webpages.js")
 });
 getActiveView(import_panel).setAttribute("noautohide", true);
+
+import_panel.port.on("main-menu", function() {
+    mainMenu(import_panel);
+});
 
 import_panel.port.on("close-window", function() {
     import_panel.hide();
@@ -133,6 +141,9 @@ function analyzeKeywordsInText(otherkeywords, analyzeText) {
     return keywords;
 }
 
+/*import function. It takes all selected files, run saving.js for every page and takes result.
+then all results collects in array and calls saveAndWriteInfo function.
+So, every page processes as an usual page when we try to save it*/
 import_panel.port.on('import', function(text) {
     var mydata = JSON.parse(text);
     var files = mydata['files'];
@@ -186,9 +197,7 @@ import_panel.port.on('import', function(text) {
             }
         });
     }
-
     //import_panel.port.emit("imported");
-
 })
 
 
@@ -249,6 +258,7 @@ function checkingPath(path) {
         return -1;
 }
 
+/*this function checks database, creates tables if they aren't exist, creates categories, if they aren't in db*/
 function* checking(fullDBPath, messPanel) {
     var conn;
     try {
@@ -381,6 +391,11 @@ function savePage(asResume) {
             saving_entry.hide();
             handleHide();
         });
+
+        saving_entry.port.on("main-menu", function() {
+            mainMenu(saving_entry);
+        });
+        
         saving_entry.port.on("saving-text-entered", function(text) {
             try {
                 var keywords = JSON.parse(text)['keywords'];
@@ -410,6 +425,8 @@ function savePage(asResume) {
     });
 }
 
+/*this function takes file info(name, keywords, type(is it resume) ).
+It deletes info about files with same name, then insert info about file and its keywords.*/
 function* writeInDB(conn, filename, keywords, users_pane, signal, asResume) {
     try {
         var query = 'DELETE FROM files WHERE path = ?';
@@ -484,6 +501,11 @@ function* writeInDB(conn, filename, keywords, users_pane, signal, asResume) {
     }
 }
 
+/*arr is array with files info(content, keywords,etc)
+this function calls during import and saving. It checkes database
+(maybe somebody deleted database before these actions), then it works with arr.
+and for every arr element function create and write file in filesystem, 
+and then calls writeInDB function, that writes keywords in database*/
 function saveAndWriteInfo(fullDBPath, working_dir, arr, my_panel, signal) {
     Task.spawn(function*() {
         try {
@@ -513,10 +535,10 @@ function saveAndWriteInfo(fullDBPath, working_dir, arr, my_panel, signal) {
     });
 }
 
-//finding function.It takes data,typed by user and find files by keywords or doing simple find.
-//for finding by keywords it calls findByKeyword function,
-//for other way - it check dirpath from user,and,if everything is ok, 
-//take all *.html files and give them one to findInFile function 
+/*finding function.It takes data,typed by user and find files by keywords or doing simple find.
+for finding by keywords it calls findByKeyword function,
+for other way - it check dirpath from user,and,if everything is ok, 
+take all *.html files and give them one to findInFile function */
 function findText(text) {
     var result = [],
         count = 0;
@@ -562,7 +584,7 @@ function findText(text) {
 }
 
 
-//simple find - open file and read it
+/*simple search - open file and read it*/
 function findInFile(file, findInfo, strictFind) {
     var result = false;
     var TextReader = fileIO.open(file, "r");
@@ -625,6 +647,10 @@ When we separate 'value' by punctiation symbols, we will have keywordsArr:
 [{'value': '%Программист%', 'operand': 'LIKE'},{'value': '%дизайнер%', 'operand': 'LIKE'},
 {'value': 'администратор', 'operand': '='},{'value': 'html', 'operand': '='}]
 % symbol means,that we can take keywords with other text is this symbol's place
+
+TODO
+
+think about date search!it's difficult,because we need to decide date format.I mean, DD.MM.YYYY or MM.DD.YYYY or other way/
 
 */
 //fullDBPath was defined at this page top, and then it getting when user chooses menu items
@@ -794,6 +820,8 @@ function* findByPayment(conn, keywords, category_id) {
     return filesresult;
 }
 
+/*this function sends info to find panel. We need in this function, 
+because we have two different ways for finding: by keywords(in database) and simple searching - in files*/
 function sendFindInfo(result, count) {
     var data = {
         'result': result,
@@ -820,13 +848,13 @@ function compareDate(value, keywords) {
     return true
 }
 
-// Show the panel when the user clicks the button.
+/* Show the panel when the user clicks the button.*/
 function findClick(state) {
     text_entry.show();
 }
 
 
-//shows menu under main button
+/*shows menu under main button*/
 function handleChange(state) {
     if (state.checked) {
         panel.show({
@@ -839,7 +867,14 @@ function handleChange(state) {
     }
 }
 
-//make main button unchecked and be ready for click
+/*make main button unchecked and be ready for click*/
 function handleHide() {
     button.state('window', { checked: false });
+}
+
+
+function mainMenu(myPanel) {
+    myPanel.hide();
+    handleHide();
+    button.click();    
 }

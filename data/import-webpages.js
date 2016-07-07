@@ -1,17 +1,23 @@
-var importDir = document.getElementById("import-dir");
-var chosenFiles = document.getElementById("chosen-files");
-var dir = document.getElementById("saving-dir");
-var resultArea = document.getElementById("result-list");
-var importBtn = document.getElementById("import");
-var divLoading = document.getElementById('divLoading');
-var savingFileLabel = document.getElementById('saving-file');
-var filesNum = 0;
-// make eventlisteners.
-importBtn.addEventListener('click', submit, false);
-importDir.addEventListener('change', onAddFiles, false);
-document.getElementById('close-icon').addEventListener('click', closeWindow, false);
-document.getElementById('close-btn').addEventListener('click', closeWindow, false);
-//dir.value = 'C:\\Users\\tatyana_c\\Desktop\\addon';
+try {
+    var importDir = document.getElementById("import-dir");
+    var chosenFiles = document.getElementById("chosen-files");
+    var dir = document.getElementById("saving-dir");
+    var resultArea = document.getElementById("result-list");
+    var importBtn = document.getElementById("import");
+    var divLoading = document.getElementById('divLoading');
+    var savingFileLabel = document.getElementById('saving-file');
+    var filesNum = 0;
+    // make eventlisteners.
+    importBtn.addEventListener('click', submit, false);
+    importDir.addEventListener('change', onAddFiles, false);
+    document.getElementById('close-btn').addEventListener('click', closeWindow, false);
+    document.getElementsByClassName('close-icon')[0].addEventListener('click', closeWindow, false);
+    document.getElementsByClassName('menu-icon')[0].addEventListener('click', goToMenu, false);
+    //dir.value = 'C:\\Users\\tatyana_c\\Desktop\\addon';
+} catch (err) {
+    alert('There was error: '+ err.message +';\n' +  err.stack);
+}
+
 
 //port listeners
 self.port.on('error', function(text) {
@@ -48,6 +54,19 @@ self.port.on("imported", function(text) {
 });
 
 
+/*functions*/
+function goToMenu() {
+    self.port.emit('main-menu', '');
+}
+
+function closeWindow() {
+    self.port.emit("close-window");
+    while (resultArea.children.length > 0) {
+        resultArea.removeChild(resultArea.children[0]);
+    }
+    chosenFiles.innerHTML = 0;
+}
+
 /*value - filename or error message with filename
 state - error or success.false\true*/
 function createResultItem(value, state) {
@@ -73,14 +92,6 @@ function onAddFiles(evt) {
     chosenFiles.innerHTML = importDir.files.length;
 }
 
-function closeWindow() {
-    self.port.emit("close-window");
-    while (resultArea.children.length > 0) {
-        resultArea.removeChild(resultArea.children[0]);
-    }
-    chosenFiles.innerHTML = 0;
-}
-
 
 function submit() {
     if (importDir.files.length > 0) {
@@ -95,5 +106,7 @@ function submit() {
         while (resultArea.children.length > 0) {
             resultArea.removeChild(resultArea.children[0]);
         }
+    } else {
+        alert('Invalid dir for save!');
     }
 }

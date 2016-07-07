@@ -1,11 +1,12 @@
 {
-  "title": "webpages-worker",
-  "name": "webpages-worker",
-  "version": "0.0.18",
+  "title": "Head researcher",
+  "name": "head-researcher",
+  "version": "0.0.2",
   "description": "This add-on can save webpages in database and find some info in *.html files.",
   "main": "index.js",
   "author": "tatiana",
   "license": "MIT",
+  "icon": "resource://@head-researcher/data/icon/main-icon.png",
   "keywords": [
     "jetpack"
   ],

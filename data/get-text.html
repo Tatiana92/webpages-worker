@@ -1,51 +1,59 @@
-<html>
+<!DOCTYPE html>
 
+<html>
 <head>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="menu.css" />
 </head>
 
 <body>
-    <div>
-        <span id="close-icon" title="Close window"> </span>
-    </div>
+    <span class="close-icon" title="Close window"> </span>
+    <span class="menu-icon" title="Close window"> </span>
+
     <div class="contentpanel">
         <br>
         <ul class="tab">
-            <li id='keywords' class="tablinks">Search by keywords</li>
-            <li id='usual' class="tablinks">Search in files</li>
+            <li class="tablinks" id="keywords">Search by keywords</li>
+            <li class="tablinks" id="usual">Search in files</li>
         </ul>
+
         <div class="searchbar">
             <label>Please, type info for search</label>
-            <div id="keywords-block" class="tabcontent">
+
+            <div class="tabcontent" id="keywords-block">
                 <table id="resume-keys">
                 </table>
-                <center><span id="add-clause" title="Add clause"></span></center>
+                <div class="center"><span id="add-clause" title="Add clause"></span></div>
                 <hr>
             </div>
-            <div id="usual-block" class="tabcontent">
+
+            <div class="tabcontent" id="usual-block">
                 <input type="text" id="edit-box">
                 <input type="checkbox" id="find-strict" />
-                <label for='find-strict'><span></span>find this text strict</label>
+                <label for="find-strict"><span></span>find this text strict</label>
+
                 <label>Please, type dirpath for search</label>
-                <input type="text" id="finding-dir" />
+                <input type="text" id="finding-dir"/>
             </div>
+
             <table>
                 <tr>
-                    <td colspan='2'>
+                    <td colspan="2">
                         <button id="find">Find</button>
                     </td>
-                    <td colspan='2'>
+                    <td colspan="2">
                         FOUNDED:&nbsp;&nbsp;
-                        <label id='res-count'></label>
+                        <label id="res-count"></label>
                     </td>
                 </tr>
             </table>
+
             <div id="result-list"></div>
         </div>
-        <center>
+
+        <div class="center">
             <button id="close-btn">Close</button>
-        </center>
+        </div>
     </div>
 </body>
 </html>

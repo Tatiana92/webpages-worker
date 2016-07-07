@@ -1,23 +1,26 @@
+<!DOCTYPE html>
 <html>
-
 <head>
     <link rel="stylesheet" href="menu.css" />
 </head>
 
 <body>
-    <div>
-        <span id="close-icon" title="Close window"> </span>
-    </div>
-    <center>
+    <span class="close-icon" title="Close window"> </span>
+    <span class="menu-icon" title="Close window"> </span>
+
+    <div class="center">
         <label>Please, type keywords</label>
+
         <textarea id="keywords-list"></textarea>
         <table id="resume-keys">
         </table>
+
         <label>Please, type dirpath for saving</label>
-        <input type="text" id="saving-dir" />
+        <input type="text" id="saving-dir"/>
+
         <button id="save">Save</button>
         <button id="close-btn">Close</button>
-    </center>
+    </div>
     <div id="divLoading">
     </div>
 </body>

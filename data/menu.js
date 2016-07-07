@@ -1,11 +1,16 @@
-var menu = document.getElementsByClassName("block-item");
-var dir = document.getElementById("db-dir");
+try {
+    var menu = document.getElementsByClassName("block-item");
+    var dir = document.getElementById("db-dir");
 
-for (var i = 0; i < menu.length; i++) {
-    menu[i].addEventListener('click', select, false);
+    for (var i = 0; i < menu.length; i++) {
+        menu[i].addEventListener('click', select, false);
+    }
+
+    document.getElementsByClassName('hide-icon')[0].addEventListener('click', closeWindow, false);
+} catch (err) {
+    alert('There was error: '+ err.message +';\n' +  err.stack);
 }
 
-document.getElementById('hide-icon').addEventListener('click', closeWindow, false);
 
 self.port.on("show", function onShow() {
     //dir.value = 'C:\\Users\\tatyana_c\\Desktop';
