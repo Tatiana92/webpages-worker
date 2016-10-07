@@ -1,7 +1,7 @@
 {
   "title": "Head researcher",
   "name": "head-researcher",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "This add-on can save webpages in database and find some info in *.html files.",
   "main": "index.js",
   "author": "tatiana",

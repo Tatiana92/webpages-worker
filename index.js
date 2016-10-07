@@ -15,24 +15,32 @@ Cu.import("resource://gre/modules/FileUtils.jsm");
 
 
 var dbFile = 'webpages.sqlite'; //'C:\\Users\\tatyana_c\\Desktop\\webpages.txt';
-var fullDBPath = '';
+var fullDBPath = 'C:\\Users\\tatyana_c\\Desktop\\';
 
-var hhselector = { 'block': "[data-qa='resume-block-experience']", 'company': "[class='resume-block-item-gap']", 'experience': "[class='resume-block-right-column']" };
+var hhselector = { 'block': "[data-qa='resume-block-experience']", 
+                    'company': ".resume-block-item-gap, .resume-block__experience", 
+                    'experience': "[data-qa='resume-block-experience-position'], [data-qa='resume-block-experience-description'], [class='resume-block__experience-gap-bottom']" };
 var hhselector2 = { 'block': '.resume__experience', 'company': ".resume__experience__item", 'experience': ".resume__experience__desc" };
 
 var savingFormInfo = {
     'table': {
         'Position': { 'element': 'input', 'hhselector3': '.b-resume-profession', 'hhselector2': ".resume__position__title", 'hhselector': "[data-qa='resume-block-title-position']", 'params': { 'name': 'profession', 'type': 'text' } },
-        'Full name': { 'element': 'input', 'hhselector3': '.b-resume-name', 'hhselector2': ".resume__personal__name", 'hhselector': "[data-qa='resume-personal-address']", 'params': { 'name': 'name', 'type': 'text' } },
+        'Full name': { 'element': 'input', 'hhselector3': '.b-resume-name', 'hhselector2': ".resume__personal__name", 'hhselector': "[data-qa='resume-personal-name']", 'params': { 'name': 'name', 'type': 'text' } },
+        'Phone': { 'element': 'input', 'hhselector3': '.b-resume-important .b-resume-important-accent', 'hhselector2': ".skype_pnh_text_span", 'hhselector': "[itemprop='telephone']", 'params': { 'name': 'phone', 'type': 'text' } },
+        'Email': { 'element': 'input', 'hhselector3': ".b-resume-important .b-forma-widecell a", 'hhselector2': "[itemprop='email']", 'hhselector': "[itemprop='email']", 'params': { 'name': 'email', 'type': 'text' } },
+
         'Date of Birth': { 'element': 'input', 'hhselector3': '.b-resume-important tr', 'hhselector2': "[itemprop='birthDate']", 'hhselector': "[data-qa='resume-personal-birthday']", 'params': { 'name': 'birthday', 'type': 'text' } },
         'Work': { 'element': 'textarea', 'hhselector3': '.b-resume-experience', 'hhselector2': hhselector2, 'hhselector': hhselector, 'params': { 'name': 'work_history' } },
-        'Salary': { 'element': 'input', 'hhselector3': '.b-resume-important tr', 'hhselector2': ".resume__position__salary", 'hhselector': "[data-qa='resume-block-salary']", 'params': { 'name': 'payment', 'type': 'text' } },
+        'Salary': { 'element': 'input', 'hhselector3': '.b-resume-important .b-resume-important-accent', 'hhselector2': ".resume__position__salary", 'hhselector': "[data-qa='resume-block-salary']", 'params': { 'name': 'payment', 'type': 'text' } },
         'Skills': { 'element': 'textarea', 'hhselector3': '.b-resume-keywords', 'hhselector2': '[data-qa="skills-element"]', 'hhselector': "[data-qa='bloko-tag__text']", 'params': { 'name': 'achievements' } },
         'Other info': { 'element': 'textarea', 'hhselector3': '.b-resume-additional', 'hhselector2': ".resume__twocols_cell", 'hhselector': "[data-qa='resume-block-skills']", 'params': { 'name': 'additional_info' } },
         'Languages': { 'element': 'input', 'hhselector3': '.b-resume-additional .b-forma-table tr', 'hhselector2': '.resume-block .resume-block', 'hhselector': "[data-qa='resume-block-language-item']", 'params': { 'name': 'languages', 'type': 'text' } },
-        'Employment': { 'element': 'input', 'hhselector2': ".resume__position__specialization ul", 'hhselector': "[data-qa='resume-block-specialization-category']", 'params': { 'name': 'игын', 'type': 'text' } }
+        'Employment': { 'element': 'input', 'hhselector2': ".resume__position__specialization ul", 'hhselector': "[data-qa='resume-block-specialization-category']", 'params': { 'name': 'busy', 'type': 'text' } }
     }
 }
+
+var deleteSelectors = ['.b-footer', '.HH-Related-Resumes', '.footer', '.HH-SearchVacancyMap-Footer', '.resume__related', 
+    '.m-row_foot', '.b-related-wrapper', '.l-layout-left', '.navi__top', '.navi__menu', '.navi__dummy', '.navi', '.b-topbanner', '.b-head'];// 
 
 var button = ToggleButton({
     id: "webpages",
@@ -162,8 +170,12 @@ import_panel.port.on('import', function(text) {
 
         var pageWorker = require("sdk/page-worker").Page({
             contentScriptFile: data.url("saving.js"),
-            contentScriptOptions: { asResume: asResume, 'table': savingFormInfo['table'], 'import': true },
-            contentURL: files[i]
+            contentScriptOptions: { asResume: asResume, 
+                                    'table': savingFormInfo['table'], 
+                                    'import': true,
+                                    'filename': files[i]['name'], 
+                                    'deleteSelectors': deleteSelectors },
+            contentURL: files[i]['data']
         });
         pageWorker.port.on("save-data", function(text) {
             var savingData = JSON.parse(text);
@@ -171,29 +183,34 @@ import_panel.port.on('import', function(text) {
             var filename = savingData['filename'];
             var keywords = {};
             asResume = savingData['asResume'];
-
-            if (asResume == true) {
-                for (var row in savingData['keywords']) {
-                    keywords[row] = savingData['keywords'][row].value.toLowerCase();
+            try {
+                if (asResume == true) {
+                    for (var row in savingData['keywords']) {
+                        keywords[row] = savingData['keywords'][row].value.toLowerCase();
+                    }
+                } else {
+                    var myKeywords = analyzeKeywordsInText(savingData['keywords'].toLowerCase(), savingData['analyzeText']);
+                    keywords['Other info'] = myKeywords;
                 }
-            } else {
-                var myKeywords = analyzeKeywordsInText(savingData['keywords'].toLowerCase(), savingData['analyzeText']);
-                keywords['Other info'] = myKeywords;
-            }
-            arr.push({
-                'keywords': keywords,
-                'webpage': webpage,
-                'filename': filename,
-                'asResume': asResume
-            })
-            if (arr.length >= files.length) {
-                saveAndWriteInfo(fullDBPath, working_dir, arr, import_panel, "imported");
-                /*for (var k = 0; k < arr.length; k++) {
-                    Task.spawn(function* () {
-                        yield saveAndWriteInfo(fileIO.join(working_dir, arr[k]['filename']), arr[k]['webpage'], fullDBPath, arr[k]['keywords'], import_panel, "imported", arr[k]['asResume']);
-                     
-                    });
-                }*/
+                arr.push({
+                    'keywords': keywords,
+                    'webpage': webpage,
+                    'filename': filename,
+                    'asResume': asResume
+                })
+                if (arr.length >= files.length) {
+                    saveAndWriteInfo(fullDBPath, working_dir, arr, import_panel, "imported");
+                    /*for (var k = 0; k < arr.length; k++) {
+                        Task.spawn(function* () {
+                            yield saveAndWriteInfo(fileIO.join(working_dir, arr[k]['filename']), arr[k]['webpage'], fullDBPath, arr[k]['keywords'], import_panel, "imported", arr[k]['asResume']);
+                         
+                        });
+                    }*/
+                }
+            } catch (err) {
+                debugger;
+                console.log('There was error: '+ err.message +';\n' +  err.stack);
+
             }
         });
     }
@@ -312,7 +329,10 @@ function importPages() {
 function savePage(asResume) {
     var saving = tabs.activeTab.attach({
         contentScriptFile: data.url("saving.js"),
-        contentScriptOptions: { asResume: asResume, 'table': savingFormInfo['table'], 'import': false }
+        contentScriptOptions: { asResume: asResume, 
+                                'table': savingFormInfo['table'], 
+                                'import': false,
+                                'deleteSelectors': deleteSelectors }
     });
 
     saving.port.on("save-data", function(text) {
@@ -672,8 +692,7 @@ function findByKeyword(fullDBPath, allKeywords) {
             var keywords_result = {},
                 keywords_count = 0;
             for (var cat_name in allKeywords) {
-
-                if (categories[cat_name] != undefined && cat_name.indexOf('date') != -1) {
+                if (categories[cat_name] != undefined && cat_name.toLowerCase().indexOf('date') != -1) {
                     keywords_result[keywords_count + '_' + cat_name] = yield findByDate(conn, allKeywords[cat_name], categories[cat_name]);
                     keywords_count++;
                     continue;
@@ -689,9 +708,9 @@ function findByKeyword(fullDBPath, allKeywords) {
                 for (var i = 0; i < kwItem.length; i++) {
                     var infoarr = [];
                     if (kwItem[i]['operand'].toLowerCase() == 'LIKE'.toLowerCase())
-                        infoarr = ('%' + kwItem[i]['value'].replace(/[^a-zA-ZА-Яа-я0-9\+\#\s]/g, " ").replace(/(( )+)/gm, "%,%") + '%').split(',');
+                        infoarr = ('%' + kwItem[i]['value'].replace(/[^a-zA-ZА-Яа-я0-9\+\#\@\-\s]/g, " ").replace(/(( )+)/gm, "%,%") + '%').split(',');
                     else
-                        infoarr = kwItem[i]['value'].toLowerCase().replace(/[^a-zA-ZА-Яа-я0-9\+\#\s]/g, " ").replace(/(( )+)/gm, ",").split(',');
+                        infoarr = kwItem[i]['value'].toLowerCase().replace(/[^a-zA-ZА-Яа-я0-9\+\#\@\-\s]/g, " ").replace(/(( )+)/gm, ",").split(',');
                     for (var j = 0; j < infoarr.length; j++) {
                         if (infoarr[j] != '%%')
                             keywordsArr.push({ 'value': infoarr[j], 'operand': kwItem[i]['operand'] });
@@ -812,8 +831,9 @@ function* findByPayment(conn, keywords, category_id) {
         query += ' links.kw_id IN (' + whereClause.join(',') + ') GROUP BY (files.path);';
         result = yield conn.execute(query, keywords_id);
         for (var row = 0; row < result.length; row++) {
-            if (filesresult.indexOf(result[row].getResultByName("path")) == -1)
+            if (filesresult.indexOf(result[row].getResultByName("path")) == -1) {
                 filesresult.push(result[row].getResultByName("path"));
+            }
         }
     }
     //SELECT * FROM files WHERE files.id IN (SELECT file_id  FROM links  WHERE kw_id NOT IN(SELECT id FROM keywords WHERE cat_id=5) GROUP BY file_id)
@@ -834,13 +854,15 @@ function sendFindInfo(result, count) {
 function compareDate(value, keywords) {
     for (var item = 0; item < keywords.length; item++) {
         var tmp = keywords[item]["value"].split('.').join('');
-        if (keywords[item]["operand"] == '=')
+        if (keywords[item]["operand"] == '=') {
             value += '=';
+        }
 
         var str = value + keywords[item]["operand"] + tmp;
         try {
-            if (eval(str) == false)
+            if (eval(str) == false) {
                 return false;
+            }
         } catch (e) {
             return false;
         }

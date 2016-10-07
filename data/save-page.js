@@ -49,6 +49,9 @@ self.port.on('set-item', function(text) {
     if (elem.tagName == 'INPUT' || elem.tagName == 'TEXTAREA') {
         var name = elem.parentElement.parentElement.children[0].innerText;
         elem.value = parseValue([text, ], name);
+        if (name.toLowerCase().indexOf('date') != -1) {
+            checkDate(elem);
+        }
         if (elem.parentElement.parentElement.nextElementSibling != null) {
             setFocus(elem.parentElement.parentElement.nextElementSibling.children[1].children[0]);
         } else {
@@ -70,7 +73,7 @@ function closeWindow() {
 
 /*preparing page when panel is open. Making inputs and filling them by info( if we have info)*/
 function onShow() {
-    dir.value = localStorage.getItem('webpages-dir');
+    dir.value = "C:\\Users\\tatyana_c\\Desktop\\for addon\\addon"//localStorage.getItem('webpages-dir');
 
     if (self.options.asResume == true && self.options.tableContent != undefined) {
         tableContent = self.options.tableContent;
@@ -89,8 +92,9 @@ function onShow() {
             for (var property in tableContent[row]['params']) {
                 elem.setAttribute(property, tableContent[row]['params'][property]);
             }
-            if (tableContent[row]['value'] == undefined)
+            if (tableContent[row]['value'] == undefined) {
                 tableContent[row]['value'] = ['', ];
+            }
             elem.value = tableContent[row]['value']; //parseValue(tableContent[row]['value'], row);//;
             tableContent[row]['dom-object'] = elem;
             td2.appendChild(elem);
@@ -102,6 +106,13 @@ function onShow() {
             elem.addEventListener('click', function(e) {
                 setFocus(e.target);
             }, false);
+
+            if (row.toLowerCase().indexOf('date') != -1) {
+                elem.addEventListener('keyup', function(e, value) {
+                    checkDate(this);
+                }, false);
+                checkDate(elem);
+            }
         }
         textArea.setAttribute('hidden', true);
         keywordsTable.removeAttribute('hidden');
@@ -114,13 +125,17 @@ function onShow() {
 
 function submit() {
     if (dir.value.length > 0) {
-        var data = {
-            'keywords': getValues(),
-            'dir': dir.value
+        if (document.getElementsByClassName('error-input').length <= 0) {
+            var data = {
+                'keywords': getValues(),
+                'dir': dir.value
+            }
+            saveBtn.disabled = true;
+            divLoading.className += " show";
+            self.port.emit("saving-text-entered", JSON.stringify(data));
+        } else {
+            alert('Bad value for date! We need in YYYY.MM.DD format');
         }
-        saveBtn.disabled = true;
-        divLoading.className += " show";
-        self.port.emit("saving-text-entered", JSON.stringify(data));
     } else {
         alert('Invalid dir for save!');
     }
@@ -148,6 +163,23 @@ function setFocus(elem) {
     }
     elem.focus();
     elem.className += ' focused';
+}
+
+function checkDate(elem) {
+    var value = elem.value.replace(/\./g, "-");
+    if (isNaN(Date.parse(value)) && value.length > 0) {
+        setError(elem);
+    } else {
+        deleteError(elem);
+    }
+}
+function setError(elem) {
+    if (elem.className.indexOf('error-input') == -1) {
+        elem.className += ' error-input';
+    }
+}
+function deleteError(elem) {
+    elem.className = elem.className.replace(/ error-input/g, "");
 }
 
 function month2num(name) {

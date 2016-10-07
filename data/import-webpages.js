@@ -97,7 +97,7 @@ function submit() {
     if (importDir.files.length > 0) {
         var data = [];
         for (var i = 0; i < importDir.files.length; i++) {
-            data.push(URL.createObjectURL(importDir.files[i]));
+            data.push({'name': importDir.files[i].name, 'data': URL.createObjectURL(importDir.files[i])});
         }
         filesNum = data.length;
         importBtn.disabled = true;

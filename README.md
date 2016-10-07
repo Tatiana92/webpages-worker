@@ -12,4 +12,9 @@ There is some downloading code in 'saving.js'.
 'get-text.html' is form for finding text panel, and 'get-text.js' has some code 
 for getting and setting info from this panel and form events processing.
 'get-text.js' is content script for finding panel.
-'index.js' has code for creating main add-on button and managing all add-on panels/
+'index.js' has code for creating main add-on button and managing all add-on panels
+
+
+for running you need to type in command line 
+
+jpm run

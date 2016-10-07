@@ -1,3 +1,23 @@
+var isResume = document.location.href.indexOf('hh.ru/resume') != -1 || document.documentElement.innerText.indexOf('HeadHunter') != -1;
+var metas = document.getElementsByTagName('meta'); 
+
+for (var i = 0; i < metas.length; i++) { 
+  if (metas[i].getAttribute("content")) {
+    if (metas[i].getAttribute("content").toLowerCase().indexOf('headhunter') != -1) { 
+      isResume = true;
+    }
+  } 
+} 
+if (self.options.deleteSelectors) {
+    for (var i = 0; i < self.options.deleteSelectors.length; i++) {
+        var elements = document.querySelectorAll(self.options.deleteSelectors[i]);
+        Array.prototype.forEach.call( elements, function( node ) {
+            node.parentNode.removeChild( node );
+        });
+    }
+}
+
+
 var content = unescape(encodeURIComponent(document.documentElement.outerHTML));
 var keywords = '';
 var date = new Date();
@@ -31,7 +51,7 @@ data = {
 };
 
 if (self.options.asResume == true) {
-    if (document.location.href.indexOf('hh.ru/resume') != -1 || document.documentElement.innerText.indexOf('HeadHunter') != -1) {
+    if (isResume) {
         try {
             for (var i in self.options.table) {
                 if (self.options.table[i]['value'] == undefined)
@@ -86,13 +106,20 @@ if (self.options.asResume == true) {
                             if (children3.length == 0) {
                                 children3 = tmparr[row].querySelectorAll(self.options.table[i]['hhselector2']['experience']);
                             }
-                            self.options.table[i]['value'].push(children3[0].innerText.substr(0, 1000));
+                            var experience = '';
+                            for (var k = 0; k < children3.length; k++) {
+                                if (children3[k].innerText.length) {
+                                    experience += children3[k].innerText + '\n';
+                                }
+                            }
+                            self.options.table[i]['value'].push(experience.substr(0, 1000));
                         }
                     }
                     if (arr.length == 0) {
                         arr = document.querySelectorAll(self.options.table[i]['hhselector3']); //very old hh
-                        if (arr.length > 0)
+                        if (arr.length > 0) {
                             self.options.table[i]['value'].push(arr[0].innerText);
+                        }
                     }
                     continue;
                 }
@@ -116,16 +143,27 @@ if (self.options.asResume == true) {
                 /*maybe it's TOO OLD HH PAGE! salary and language are in tables and no named blocks for them.
                 So, there are table identificators in hhselector3 field. And we need to find info by field name on page.*/
                 if (elemArr.length == 0) {
-                    if (i.indexOf('Salary') != -1) {
-                        self.options.table[i]['value'].push(findInTable(self.options.table[i]['hhselector3'], 'зарпл'));
-                        continue;
-                    } else {
-                        if (i.indexOf('Languag') != -1) {
+                    switch (i) {
+                        case 'Salary':
+                            self.options.table[i]['value'].push(findInTable(self.options.table[i]['hhselector3'], 'зарпл'));
+                            continue;
+                        case 'Languages':
                             self.options.table[i]['value'].push(findInTable(self.options.table[i]['hhselector3'], 'язык'));
                             continue;
-                        } else {
+                        case 'Phone':
+                            self.options.table[i]['value'].push(findInTable(self.options.table[i]['hhselector3'], 'тел'));
+                            continue;
+                        case 'Email':
+                            var elemArr = document.querySelectorAll(self.options.table[i]['hhselector3']);
+                            for (var j = 0; j < elemArr.length; j++) {
+                                if (elemArr[j].innerText.toLowerCase().indexOf('@') != -1) {
+                                    self.options.table[i]['value'].push(elemArr[j].innerText);
+                                }
+                            }
+                            //self.options.table[i]['value'].push(findInTable(self.options.table[i]['hhselector3'], 'mail'));
+                            continue;
+                        default:
                             elemArr = document.querySelectorAll(self.options.table[i]['hhselector3']);
-                        }
                     }
                 }
                 for (var j = 0; j < elemArr.length; j++) {
@@ -133,10 +171,21 @@ if (self.options.asResume == true) {
                 }
             }
             for (var i in self.options.table) {
+                if (i == 'Email') {
+                    continue;
+                }
                 self.options.table[i]['value'] = parseValue(self.options.table[i]['value'], i);
             }
             data['ishh'] = true;
             data['keywords'] = self.options.table;
+            if (self.options.filename) {
+                data['filename'] = self.options.filename;
+            } else {
+                if (self.options.table['Full name']['value'].length) {
+                    data['filename'] = self.options.table['Full name']['value'] + '.html';
+                }
+            }
+
         } catch (e) {
             debugger;
             console.log('error while parsing - ', e.message, e.stack);
@@ -172,7 +221,7 @@ if (self.options.asResume == true) {
 
 
 function findInTable(selector, label) {
-    elemArr = document.querySelectorAll(selector);
+    var elemArr = document.querySelectorAll(selector);
     for (var j = 0; j < elemArr.length; j++) {
         if (elemArr[j].innerText.toLowerCase().indexOf(label) != -1) {
             return elemArr[j].children[1].innerText;
@@ -249,6 +298,9 @@ function parseValue(value, cat) {
         case 'Date of Birth':
             var birthdate = month2num(value[0].trim());
             value = birthdate.replace(/[\:\.\-\;\|\"\'\*\?\\\/<>\+\n\t\r ]/g, "^").split('^').join('.');
+            break;
+        case 'Phone':
+            value = value.join(',').trim().replace(/[^0-9\+\,]/g, "");
             break;
         case 'Salary':
 

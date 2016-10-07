@@ -71,13 +71,17 @@ function submit() {
     var strictFind = isStrict.checked && (keywordTab.className.indexOf('active') == -1);
     var text = keywordTab.className.indexOf('active') == -1 ? findText.value : getKeywords();
     if (dir.value.length > 0 || isKeyword) {
-        data = {
-            'text': text,
-            'dir': dir.value,
-            'strictFind': strictFind,
-            'keyword': isKeyword
+        if (document.getElementsByClassName('error-input').length <= 0) {
+            data = {
+                'text': text,
+                'dir': dir.value,
+                'strictFind': strictFind,
+                'keyword': isKeyword
+            }
+            self.port.emit("text-entered", JSON.stringify(data));
+        } else {
+            alert('Bad value for date! We need in YYYY.MM.DD format');
         }
-        self.port.emit("text-entered", JSON.stringify(data));
     } else {
         alert('Invalid dir for find!');
     }
@@ -168,11 +172,15 @@ function onSelectChange(e) {
     while (operand.children.length > 0) {
         operand.remove(0);
     }
+    input.removeEventListener('keyup', checkDate, false);
+    deleteError(input);
     input.value = '';
     if (e.target.value.toLowerCase().indexOf('date') != -1) {
         input.type = 'date';
         input.placeholder = 'ГГГГ.ММ.ДД';
         fillingSelect(operand, list);
+
+        input.addEventListener('keyup', checkDate, false);
         return;
     }
     input.type = 'text';
@@ -183,6 +191,24 @@ function onSelectChange(e) {
         list = ['LIKE', '=', '<>']; // all other categories - not salary and not date
     }
     fillingSelect(operand, list);
+}
+
+
+function checkDate(evt) {
+    var value = evt.target.value.replace(/\./g, "-");
+    if (isNaN(Date.parse(value)) && value.length > 0) {
+        setError(evt.target);
+    } else {
+        deleteError(evt.target);
+    }
+}
+function setError(elem) {
+    if (elem.className.indexOf('error-input') == -1) {
+        elem.className += ' error-input';
+    }
+}
+function deleteError(elem) {
+    elem.className = elem.className.replace(/ error-input/g, "");
 }
 
 /*this function adds row in keyword table. One row for one condition*/

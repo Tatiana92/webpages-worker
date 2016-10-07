@@ -401,3 +401,12 @@ input[type=file] {
 
     color: #19C3D0;
 }
+
+.error-input {
+    border: 2px solid red;
+}
+
+.error-input:before {
+    content: 'Bad date';
+    color: red;
+}

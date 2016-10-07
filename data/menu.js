@@ -13,8 +13,8 @@ try {
 
 
 self.port.on("show", function onShow() {
-    //dir.value = 'C:\\Users\\tatyana_c\\Desktop';
-    dir.value = localStorage.getItem('database-dir');
+    dir.value = 'C:\\Users\\tatyana_c\\Desktop\\for addon';
+    //dir.value = localStorage.getItem('database-dir');
 });
 
 self.port.on('bad-dir', function() {
