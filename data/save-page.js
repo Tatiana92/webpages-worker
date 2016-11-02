@@ -38,9 +38,9 @@ self.port.on('good-dir', function(text) {
 });
 
 self.port.on("saved", function() {
-    alert('Webpage saved successfully!');
     divLoading.className = divLoading.className.replace(" show", "");
     saveBtn.disabled = false;
+    alert('Webpage saved successfully!');
 });
 
 /*set in inputs info, when user fills resume form by his hands*/
@@ -73,10 +73,13 @@ function closeWindow() {
 
 /*preparing page when panel is open. Making inputs and filling them by info( if we have info)*/
 function onShow() {
-    dir.value = "C:\\Users\\tatyana_c\\Desktop\\for addon\\addon"//localStorage.getItem('webpages-dir');
+    dir.value = localStorage.getItem('webpages-dir');//"C:\\Users\\tatyana_c\\Desktop\\for addon\\addon"
 
     if (self.options.asResume == true && self.options.tableContent != undefined) {
         tableContent = self.options.tableContent;
+        while (keywordsTable.children.length > 0) {
+            keywordsTable.removeChild(keywordsTable.children[0]);
+        }
         for (var row in tableContent) {
             var tr = document.createElement('tr');
             var td = document.createElement('td');
@@ -218,7 +221,7 @@ function parseValue(value, cat) {
             value = value.join(',').replace(/((\n)+)/gm, ",");
             break;
     }
-    if (['Full name', 'Date of Birth', 'Skills', 'Position'].indexOf(cat) == -1)
+    if (['Full name', 'Name', 'Surname', 'Date of Birth', 'Skills', 'Position'].indexOf(cat) == -1)
         result = value.replace(/[\:\.\;\|\"\'\*\?\\\/<>\+\n\t\r\=]/g, "^").split('^').join(',').replace(/((,)+)/gm, ",");
     else
         result = value;

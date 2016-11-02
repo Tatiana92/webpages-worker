@@ -20,19 +20,10 @@ if (self.options.deleteSelectors) {
 
 var content = unescape(encodeURIComponent(document.documentElement.outerHTML));
 var keywords = '';
-var date = new Date();
-var options = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    weekday: 'long',
-    hour: 'numeric',
-    minute: 'numeric',
-    second: 'numeric'
-};
 var table_indx = 0;
-var filename = date.toLocaleString("en-US", options);
+var filename = '';
 var data = {};
+var fullName = '';
 
 if (document.title.trim().length > 0) {
     filename = document.title.trim();
@@ -123,6 +114,30 @@ if (self.options.asResume == true) {
                     }
                     continue;
                 }
+                if (i == 'Name' || i == 'Surname') {
+                    var elemArr = document.querySelectorAll(self.options.table[i]['hhselector']);
+                    //maybe it's old hh page
+                    if (elemArr.length == 0 && self.options.table[i]['hhselector2'] != undefined) {
+                        elemArr = document.querySelectorAll(self.options.table[i]['hhselector2']);
+                        //getting language info in old hh is nontrivial
+                        if (elemArr.length == 0) {
+                            elemArr = document.querySelectorAll(self.options.table[i]['hhselector3']);
+                        }
+                    }
+
+                    for (var j = 0; j < elemArr.length; j++) {
+                        fullName = elemArr[j].innerText.substr(0, 1000);
+                        if (i == 'Name') {
+                            if (elemArr[j].innerText.split(' ').length > 1) {
+                                self.options.table[i]['value'].push(elemArr[j].innerText.split(' ')[1]);
+                            }
+                        }
+                        if (i == 'Surname') {
+                            self.options.table[i]['value'].push(elemArr[j].innerText.split(' ')[0]);
+                        }
+                    }
+                    continue;
+                }
                 /*YAHOOOO!!!!at last!it's usual processing!*/
                 var elemArr = document.querySelectorAll(self.options.table[i]['hhselector']);
                 //maybe it's old hh page
@@ -131,7 +146,7 @@ if (self.options.asResume == true) {
                     //getting language info in old hh is nontrivial
                     if (i.indexOf('Languag') != -1 && elemArr.length != 0) {
                         for (var j = 0; j < elemArr.length; j++) {
-                            if (elemArr[j].innerText.toLowerCase().indexOf('язык') != -1) {
+                            if (elemArr[j].innerText.toLowerCase().indexOf('язык') != -1 && elemArr[j].innerText.toLowerCase().indexOf('ключев') == -1) {
                                 for (var k = 1; k < elemArr[j].children.length; k++) { //first element would be a title
                                     self.options.table[i]['value'].push(elemArr[j].children[k].innerText);
                                 }
@@ -155,12 +170,13 @@ if (self.options.asResume == true) {
                             continue;
                         case 'Email':
                             var elemArr = document.querySelectorAll(self.options.table[i]['hhselector3']);
+                            var valueArr = []
                             for (var j = 0; j < elemArr.length; j++) {
                                 if (elemArr[j].innerText.toLowerCase().indexOf('@') != -1) {
-                                    self.options.table[i]['value'].push(elemArr[j].innerText);
+                                    valueArr.push(elemArr[j].innerText);
                                 }
                             }
-                            //self.options.table[i]['value'].push(findInTable(self.options.table[i]['hhselector3'], 'mail'));
+                            self.options.table[i]['value'] = valueArr;
                             continue;
                         default:
                             elemArr = document.querySelectorAll(self.options.table[i]['hhselector3']);
@@ -172,17 +188,19 @@ if (self.options.asResume == true) {
             }
             for (var i in self.options.table) {
                 if (i == 'Email') {
+                    self.options.table[i]['value'] = self.options.table[i]['value'].join(',');
                     continue;
                 }
                 self.options.table[i]['value'] = parseValue(self.options.table[i]['value'], i);
             }
             data['ishh'] = true;
             data['keywords'] = self.options.table;
+            debugger;
             if (self.options.filename) {
                 data['filename'] = self.options.filename;
             } else {
-                if (self.options.table['Full name']['value'].length) {
-                    data['filename'] = self.options.table['Full name']['value'] + '.html';
+                if (fullName.length) {
+                    data['filename'] = fullName + '.html';
                 }
             }
 
@@ -201,6 +219,9 @@ if (self.options.asResume == true) {
             if (saveUsualText == true) {
                 alert("We'll save this webpage as usual webpage");
             }
+        }
+        if (self.options.filename) {
+            data['filename'] = self.options.filename;
         }
         if (saveUsualText) {
             self.options.asResume = false;
@@ -313,7 +334,7 @@ function parseValue(value, cat) {
             value = value.join(',').replace(/((\n)+)/gm, ",");
             break;
     }
-    if (['Full name', 'Date of Birth', 'Skills', 'Position'].indexOf(cat) == -1)
+    if (['Full name', 'Name', 'Surname', 'Date of Birth', 'Skills', 'Position'].indexOf(cat) == -1)
         result = value.replace(/[\:\.\;\|\"\'\*\?\\\/<>\n\t\r\=]/g, "^").split('^').join(',').replace(/((,)+)/gm, ",");
     else
         result = value;

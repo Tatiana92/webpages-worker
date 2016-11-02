@@ -15,7 +15,7 @@ Cu.import("resource://gre/modules/FileUtils.jsm");
 
 
 var dbFile = 'webpages.sqlite'; //'C:\\Users\\tatyana_c\\Desktop\\webpages.txt';
-var fullDBPath = 'C:\\Users\\tatyana_c\\Desktop\\';
+var fullDBPath = '';//'C:\\Users\\tatyana_c\\Desktop\\';
 
 var hhselector = { 'block': "[data-qa='resume-block-experience']", 
                     'company': ".resume-block-item-gap, .resume-block__experience", 
@@ -25,7 +25,9 @@ var hhselector2 = { 'block': '.resume__experience', 'company': ".resume__experie
 var savingFormInfo = {
     'table': {
         'Position': { 'element': 'input', 'hhselector3': '.b-resume-profession', 'hhselector2': ".resume__position__title", 'hhselector': "[data-qa='resume-block-title-position']", 'params': { 'name': 'profession', 'type': 'text' } },
-        'Full name': { 'element': 'input', 'hhselector3': '.b-resume-name', 'hhselector2': ".resume__personal__name", 'hhselector': "[data-qa='resume-personal-name']", 'params': { 'name': 'name', 'type': 'text' } },
+        //'Full name': { 'element': 'input', 'hhselector3': '.b-resume-name', 'hhselector2': ".resume__personal__name", 'hhselector': "[data-qa='resume-personal-name']", 'params': { 'name': 'name', 'type': 'text' } },
+        'Name': { 'element': 'input', 'hhselector3': '.b-resume-name', 'hhselector2': ".resume__personal__name", 'hhselector': "[data-qa='resume-personal-name']", 'params': { 'name': 'fname', 'type': 'text' } },
+        'Surname': { 'element': 'input', 'hhselector3': '.b-resume-name', 'hhselector2': ".resume__personal__name", 'hhselector': "[data-qa='resume-personal-name']", 'params': { 'name': 'lname', 'type': 'text' } },
         'Phone': { 'element': 'input', 'hhselector3': '.b-resume-important .b-resume-important-accent', 'hhselector2': ".skype_pnh_text_span", 'hhselector': "[itemprop='telephone']", 'params': { 'name': 'phone', 'type': 'text' } },
         'Email': { 'element': 'input', 'hhselector3': ".b-resume-important .b-forma-widecell a", 'hhselector2': "[itemprop='email']", 'hhselector': "[itemprop='email']", 'params': { 'name': 'email', 'type': 'text' } },
 
@@ -39,8 +41,8 @@ var savingFormInfo = {
     }
 }
 
-var deleteSelectors = ['.b-footer', '.HH-Related-Resumes', '.footer', '.HH-SearchVacancyMap-Footer', '.resume__related', 
-    '.m-row_foot', '.b-related-wrapper', '.l-layout-left', '.navi__top', '.navi__menu', '.navi__dummy', '.navi', '.b-topbanner', '.b-head'];// 
+var deleteSelectors = ['.b-footer', '.HH-Related-Resumes', '.footer', '.HH-SearchVacancyMap-Footer', '.resume__related', '.banner-place_600',
+    '.m-row_foot', '.b-related-wrapper', '.l-layout-left', '.navi__top', '.navi__menu', '.navi__dummy', '.navi-dummy', '.navi', '.b-topbanner', '.b-head'];// 
 
 var button = ToggleButton({
     id: "webpages",
@@ -368,6 +370,7 @@ function savePage(asResume) {
                 saving.port.on("save-item", function(text) {
                     saving_entry.port.emit("set-item", text);
                 });
+
             }
         } else {
             var keywords = [];
@@ -400,7 +403,10 @@ function savePage(asResume) {
             getActiveView(saving_entry).setAttribute("noautohide", true);
             //saving_entry.port.emit("take-keywords", keywords);
         }
-        saving_entry.show();
+        if (!asResume || ishh) {
+            saving_entry.show();
+        }
+        
         saving_entry.on("show", function() {
             saving_entry.port.emit("show");
         });
@@ -532,7 +538,6 @@ function saveAndWriteInfo(fullDBPath, working_dir, arr, my_panel, signal) {
             yield checking(fullDBPath, my_panel);
             var conn = yield Sqlite.openConnection({ path: fullDBPath });
             yield conn.execute('PRAGMA foreign_keys = ON');
-
             for (var k = 0; k < arr.length; k++) {
                 var filename = fileIO.join(working_dir, arr[k]['filename']);
 
@@ -583,7 +588,7 @@ function findText(text) {
                 var list = fileIO.list(path); //files in dir, their names
                 for (i = 0; i < list.length; i++) { //look at all files
                     var item = fileIO.join(path, list[i]); //full path, dir + name
-                    if (fileIO.isFile(item) && (list[i].indexOf(".html") == list[i].length - ".html".length)) {
+                    if (fileIO.isFile(item) && (list[i].indexOf(".html") == list[i].length - ".html".length || list[i].indexOf(".htm") == list[i].length - ".htm".length)) {
                         if (findInFile(item, findInfo, data['strictFind'])) {
                             result.push(item);
                             count++;
@@ -613,7 +618,7 @@ function findInFile(file, findInfo, strictFind) {
         if (strictFind) {
             do {
                 text = TextReader.read(1024);
-                if (text.toLowerCase().indexOf(findInfo) != -1) {
+                if (text.indexOf(findInfo) != -1) {
                     result = true;
                     break;
                 }
@@ -707,13 +712,15 @@ function findByKeyword(fullDBPath, allKeywords) {
                 var kwItem = allKeywords[cat_name];
                 for (var i = 0; i < kwItem.length; i++) {
                     var infoarr = [];
-                    if (kwItem[i]['operand'].toLowerCase() == 'LIKE'.toLowerCase())
-                        infoarr = ('%' + kwItem[i]['value'].replace(/[^a-zA-ZА-Яа-я0-9\+\#\@\-\s]/g, " ").replace(/(( )+)/gm, "%,%") + '%').split(',');
-                    else
-                        infoarr = kwItem[i]['value'].toLowerCase().replace(/[^a-zA-ZА-Яа-я0-9\+\#\@\-\s]/g, " ").replace(/(( )+)/gm, ",").split(',');
+                    if (kwItem[i]['operand'].toLowerCase() == 'LIKE'.toLowerCase()) {
+                        infoarr = ('%' + kwItem[i]['value'].replace(/[^a-zA-ZА-Яа-я0-9\+\#\@\-\s\.]/g, " ").replace(/(( )+)/gm, "%,%") + '%').split(',');
+                    } else {
+                        infoarr = kwItem[i]['value'].toLowerCase().replace(/[^a-zA-ZА-Яа-я0-9\+\#\@\-\s\.]/g, " ").replace(/(( )+)/gm, ",").split(',');
+                    }
                     for (var j = 0; j < infoarr.length; j++) {
-                        if (infoarr[j] != '%%')
+                        if (infoarr[j] != '%%') {
                             keywordsArr.push({ 'value': infoarr[j], 'operand': kwItem[i]['operand'] });
+                        }
                     }
                 }
 

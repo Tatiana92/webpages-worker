@@ -126,10 +126,10 @@ function getKeywords() {
                     //var from = "10-11-2011"; 
                     //var numbers = inputArr[j].value.match(/\d+/g); 
                     //var date = new Date(numbers[2], numbers[0]-1, numbers[1]);
-                    info['value'] = inputArr[j].value;
+                    info['value'] = inputArr[j].value.trim();
                     break;
                 }
-                info['value'] = inputArr[j].value;
+                info['value'] = inputArr[j].value.trim();
             }
         }
         result[selectCat[i].value].push(info);
